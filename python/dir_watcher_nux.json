@@ -1,0 +1,39 @@
+{
+    "vedisdb": "~/vedisdb",
+    "logfile": "~/wd.log",
+    "pidfile": "~/wd.pid",
+    "watch_paths": [
+        {
+            "regexes": [
+                ".*"
+            ],
+            "ignore_regexes": [
+                ".*\\.swp$",
+                ".*\\.swx$",
+                ".*~$",
+                ".*/\\..*",
+                ".*vedisdb.*"
+            ],
+            "ignore_directories": true,
+            "case_sensitive": false,
+            "path": "~",
+            "recursive": true
+        },
+        {
+            "regexes": [
+                ".*"
+            ],
+            "ignore_regexes": [
+                ".*\\.swp$",
+                ".*\\.swx$",
+                ".*~$",
+                ".*/\\..*",
+                ".*vedisdb.*"
+            ],
+            "ignore_directories": true,
+            "case_sensitive": false,
+            "path": "/etc",
+            "recursive": true
+        }
+    ]
+}

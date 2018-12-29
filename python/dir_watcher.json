@@ -1,0 +1,38 @@
+{
+    "vedisdb": "e:\\vedisdb",
+    "logfile": "",
+    "pidfile": "",
+    "watch_paths": [
+        {
+            "regexes": [
+                ".*"
+            ],
+            "ignore_regexes": [
+                "c:Users\\\\admin\\\\AppData\\\\Roaming\\\\.*",
+                "c:Users\\\\admin\\\\AppData\\\\Local\\\\.*",
+                "c:\\\\Windows\\\\.*",
+                "c:Windows\\\\.*",
+                ".*vedisdb.*"
+            ],
+            "ignore_directories": true,
+            "case_sensitive": false,
+            "path": "c:",
+            "recursive": true
+        },
+        {
+            "regexes": [
+                ".*"
+            ],
+            "ignore_regexes": [
+                ".*\\.txt",
+                "c:\\\\Users\\\\admin\\\\AppData\\\\Roaming\\\\.*",
+                "c:\\\\Users\\\\admin\\\\AppData\\\\Local\\\\.*",
+                ".*vedisdb.*"
+            ],
+            "ignore_directories": true,
+            "case_sensitive": false,
+            "path": "e:",
+            "recursive": true
+        }
+    ]
+}
