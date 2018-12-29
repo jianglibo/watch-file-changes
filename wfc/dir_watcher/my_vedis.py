@@ -1,11 +1,7 @@
 from vedis import Vedis # pylint: disable=E0611
 from flask.cli import with_appcontext
 import logging
-
-from typing_extensions import Final
-
-VEDIS_FILE: Final = 'VEDIS_FILE'
-VEDIS_DB: Final = 'VEDIS_DB'
+from ..constants import VEDIS_DB, VEDIS_FILE
 
 def open_vedis(app):
     if VEDIS_FILE not in app.config:
@@ -18,6 +14,5 @@ def open_vedis(app):
 
 def close_vedis(app):
     db: Vedis = app.config[VEDIS_DB]
-
     if db is not None:
         db.close()

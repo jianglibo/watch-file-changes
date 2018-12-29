@@ -20,5 +20,5 @@ from wfc.dir_watcher import my_vedis
 
 def test_open_vedis():
     app = wfc.create_app()
-    assert app.config['ENV'] == 'production'
+    assert app.config['ENV'] == 'testing'
     assert app.config[my_vedis.VEDIS_DB]

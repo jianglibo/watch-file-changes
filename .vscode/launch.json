@@ -26,19 +26,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Django",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/manage.py",
-            "console": "integratedTerminal",
-            "args": [
-                "runserver",
-                "--noreload",
-                "--nothreading"
-            ],
-            "django": true
-        },
-        {
             "name": "Python: Flask",
             "type": "python",
             "request": "launch",

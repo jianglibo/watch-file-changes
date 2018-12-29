@@ -2,6 +2,7 @@ from flask import Flask
 from flask import Config
 from flask import Response
 from .dir_watcher import my_vedis
+from .dir_watcher import dir_watcher_entry
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -18,6 +19,7 @@ def create_app(test_config=None):
         return r
 
     my_vedis.open_vedis(app)
+    dir_watcher_entry.start_watch(app)
     return app
         
 

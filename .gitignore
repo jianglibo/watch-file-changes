@@ -113,7 +113,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.vscode/
+.vscode/*
 testing.py
-development.py
-production.py
+config/development.py
+config/production.py

@@ -10,6 +10,7 @@ from vedis import Vedis # pylint: disable=E0611
 from collections import namedtuple
 from typing_extensions import Final
 from enum import Enum
+from ..constants import WATCH_PATHES, VEDIS_DB, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE
 
 class ErrorNames(Enum):
     config_file_not_exists = 1
@@ -24,43 +25,33 @@ class WatchPath(NamedTuple):
     recursive: bool
 
 class WatchConfig():
-    def __init__(self, jdict: Dict) -> None:
-        self.vedisdb: Path = Path(jdict['vedisdb']).expanduser()
-        self.logfile: Optional[Path] = Path(jdict['logfile']).expanduser() if jdict['logfile'] else None
-        wps: List[Dict[str, Any]] = jdict['watch_paths']
-        for wp in wps:
+    def __init__(self, watch_pathes: List[Dict]) -> None:
+        for wp in watch_pathes:
             wp['path'] = Path(wp['path']).expanduser()
-        self.watch_paths: List[WatchPath] = [WatchPath(**p) for p in wps]
-        self.pidfile = Path(jdict['pidfile']).expanduser() if jdict['pidfile'] else None
+        self.watch_paths: List[WatchPath] = [WatchPath(**p) for p in watch_pathes]
 
     def get_un_exists_paths(self) -> List[WatchPath]:
         return [wp for wp in self.watch_paths if not wp.path.exists()]
 
 
 class DirWatchDog():
-    MODIFIED_HASH_TABLE: ClassVar[str] = "modified"
-    MODIFIED_REALLY_SET_TABLE: ClassVar[str] = "modified-really"
-    MOVED_SET_TABLE: ClassVar[str] = "moved"
-    DELETED_SET_TABLE: ClassVar[str] = "deleted"
-    CREATED_SET_TABLE: ClassVar[str] = "created"
-
-    def __init__(self, wc: WatchConfig) -> None:
+    def __init__(self, wc: WatchConfig, db: Vedis) -> None:
         self.wc = wc
-        self.db = Vedis(wc.vedisdb)
+        self.db = db
         self.save_me = True
         self.observers : List[Observer] = []
 
     def get_modified_number(self):
-        return self.db.scard(DirWatchDog.MODIFIED_REALLY_SET_TABLE)
+        return self.db.scard(V_MODIFIED_REALLY_SET_TABLE)
 
     def get_created_number(self):
-        return self.db.scard(DirWatchDog.CREATED_SET_TABLE)
+        return self.db.scard(V_CREATED_SET_TABLE)
 
     def get_deleted_number(self):
-        return self.db.scard(DirWatchDog.DELETED_SET_TABLE)
+        return self.db.scard(V_DELETED_SET_TABLE)
     
     def get_moved_number(self):
-        return self.db.scard(DirWatchDog.MOVED_SET_TABLE)
+        return self.db.scard(V_MOVED_SET_TABLE)
     
     def wait_seconds(self, seconds: int) -> None:
         for obs in self.observers:
@@ -79,18 +70,10 @@ class DirWatchDog():
             observer.schedule(event_handler, path_to_observe, recursive=ps.recursive)
             observer.start()
             self.observers.append(observer)
-        try:
-            while self.save_me:
-                time.sleep(1)
-            else:
-                for obs in self.observers:
-                    obs.stop()
-                self.db.close()
-        except KeyboardInterrupt:
-            for obs in self.observers:
-                obs.stop()
+    def stop_watch(self):
+        for obs in self.observers:
+            obs.stop()
             self.db.close()
-
 
 class LoggingSelectiveEventHandler(FileSystemEventHandler):
     """
@@ -148,17 +131,17 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
         what = 'directory' if event.is_directory else 'file'
         logging.debug("Moved %s: from %s to %s", what, event.src_path,
                      event.dest_path)
-        self.db.sadd(DirWatchDog.MOVED_SET_TABLE, "%s|%s" % (event.src_path, event.dest_path))
+        self.db.sadd(V_MOVED_SET_TABLE, "%s|%s" % (event.src_path, event.dest_path))
         self.db.commit()
 
     def on_created(self, event):
         what = 'directory' if event.is_directory else 'file'
         logging.debug("Created %s: %s", what, event.src_path)
-        self.db.sadd(DirWatchDog.CREATED_SET_TABLE, event.src_path)
+        self.db.sadd(V_CREATED_SET_TABLE, event.src_path)
         self.db.commit()
 
     def on_deleted(self, event):
-        self.db.sadd(DirWatchDog.DELETED_SET_TABLE, event.src_path)
+        self.db.sadd(V_DELETED_SET_TABLE, event.src_path)
         self.db.commit()
         what = 'directory' if event.is_directory else 'file'
         logging.debug("Deleted %s: %s", what, event.src_path)
@@ -166,13 +149,13 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
     def on_modified(self, event):
         src_path = event.src_path
         what = 'directory' if event.is_directory else 'file'
-        size_mtime = self.db.hget(DirWatchDog.MODIFIED_HASH_TABLE, src_path)
+        size_mtime = self.db.hget(V_MODIFIED_HASH_TABLE, src_path)
         if size_mtime is None:
             size_mtime = self.stat_tostring(src_path)
             if size_mtime is None:
                 logging.error("stat error %s: %s", what, src_path)
             else:
-                self.db.hset(DirWatchDog.MODIFIED_HASH_TABLE, src_path, size_mtime)
+                self.db.hset(V_MODIFIED_HASH_TABLE, src_path, size_mtime)
             logging.debug("Modified Not in db %s: %s", what, src_path)
         else:
             self.db.incr(src_path)
@@ -181,49 +164,54 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
                 logging.debug("Modified size_time not changed. %s: %s", what, src_path)
             else:
                 logging.debug("Modified really %s: %s", what, src_path)
-                self.db.sadd(DirWatchDog.MODIFIED_REALLY_SET_TABLE, src_path)
+                self.db.sadd(V_MODIFIED_REALLY_SET_TABLE, src_path)
                 self.db.commit()
 
-def load_watch_config(pathname: Union[None, str, Path]) -> Dict[str, Any]:
-    cp: Path
-    islinux: bool = 'nux' in sys.platform
+# def load_watch_config(pathname: Union[None, str, Path]) -> Dict[str, Any]:
+#     cp: Path
+#     islinux: bool = 'nux' in sys.platform
 
-    if islinux:
-        cf = "dir_watcher_nux.json"
-    else:
-        cf = "dir_watcher.json"
+#     if islinux:
+#         cf = "dir_watcher_nux.json"
+#     else:
+#         cf = "dir_watcher.json"
 
-    if not pathname:
-        if getattr(sys, 'frozen', False):
-            # frozen
-            f_ = Path(sys.executable)
-        else:
-            # unfrozen
-            f_ = Path(__file__)
-        cp = f_.parent.parent / cf
-        if not cp.exists():
-            cp = f_.parent / cf
-    elif isinstance(pathname, Path):
-        cp = pathname
-    else:
-        cp = Path(pathname)
+#     if not pathname:
+#         if getattr(sys, 'frozen', False):
+#             # frozen
+#             f_ = Path(sys.executable)
+#         else:
+#             # unfrozen
+#             f_ = Path(__file__)
+#         cp = f_.parent.parent / cf
+#         if not cp.exists():
+#             cp = f_.parent / cf
+#     elif isinstance(pathname, Path):
+#         cp = pathname
+#     else:
+#         cp = Path(pathname)
 
-    if not cp.exists():
-        raise ValueError("config file %s doesn't exists." % pathname, ErrorNames.config_file_not_exists)
-    print("with config file %s" % str(cp.absolute().resolve()))
+#     if not cp.exists():
+#         raise ValueError("config file %s doesn't exists." % pathname, ErrorNames.config_file_not_exists)
+#     print("with config file %s" % str(cp.absolute().resolve()))
 
-    with cp.open() as f:
-        content = f.read()
-    j: Dict[str, Any] = json.loads(content)
-    return j
+#     with cp.open() as f:
+#         content = f.read()
+#     j: Dict[str, Any] = json.loads(content)
+#     return j
 
-def get_watch_config(pathname: Union[Optional[str], Optional[Path], Dict]) -> WatchConfig:
-    if (pathname is None) or (isinstance(pathname, str)) or (isinstance(pathname, Path)):
-        wc = WatchConfig(load_watch_config(pathname))
-    else:
-        wc = WatchConfig(pathname)
+# def get_watch_config(pathname: Union[Optional[str], Optional[Path], Dict]) -> WatchConfig:
+#     if (pathname is None) or (isinstance(pathname, str)) or (isinstance(pathname, Path)):
+#         wc = WatchConfig(load_watch_config(pathname))
+#     else:
+#         wc = WatchConfig(pathname)
 
-    un_exist_watch_paths = wc.get_un_exists_paths()
-    if len(un_exist_watch_paths) > 0:
-        raise ValueError("these watch_paths %s doesn't exists." % un_exist_watch_paths, ErrorNames.un_exist_watch_paths)
-    return wc
+#     un_exist_watch_paths = wc.get_un_exists_paths()
+#     if len(un_exist_watch_paths) > 0:
+#         raise ValueError("these watch_paths %s doesn't exists." % un_exist_watch_paths, ErrorNames.un_exist_watch_paths)
+#     return wc
+
+def start_watch(app):
+    wc: WatchConfig = WatchConfig(app.config[WATCH_PATHES])
+    wd = DirWatchDog(wc, app.config[VEDIS_DB])
+    wd.watch()
