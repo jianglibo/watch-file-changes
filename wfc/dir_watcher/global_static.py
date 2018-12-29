@@ -16,16 +16,6 @@ class Configuration:
         self.server_side = self.by_os_config['ServerSide']
         self.package_dir = self.server_side['PackageDir']
         self.softwares : List[Software] = [Software(s['PackageUrl'], s['LocalName']) for s in self.by_os_config['Softwares']]
-
-    # def get_os_config(self):
-    #     my_os = self.json["OsType"]
-    #     return self.json['SwitchByOs'][my_os]
-
-    # def get_server_side(self):
-    #     return self.get_os_config()["ServerSide"]
-
-    # def get_packagedir(self):
-    #     return self.get_server_side()["PackageDir"]
     
     def get_property(self, pn):
         return self.json[pn]
@@ -40,9 +30,6 @@ class BorgConfiguration(Configuration):
     'Borg configuration'
     def __init__(self, json):
         super().__init__(json)
-        # if not(type(json) is dict):
-        #     raise ValueError('json is not a dict.')
-        # self.json = json
 
     def borg_repo_path(self, dv):
         return self.get_property_if_need(dv, "BorgRepoPath")
