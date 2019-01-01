@@ -1,0 +1,9 @@
+class Vedis():
+
+    def __init__(self, filename: str = ':mem:', open_database: bool = True) -> None: ...
+    
+    def set(self, key:str, value:str) -> None: ...
+    
+    def get(self, key:str) -> str: ...
+    
+    

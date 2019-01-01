@@ -10,7 +10,10 @@ from vedis import Vedis # pylint: disable=E0611
 from collections import namedtuple
 from typing_extensions import Final
 from enum import Enum
-from ..constants import WATCH_PATHES, VEDIS_DB, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE
+from ..constants import WATCH_PATHES, VEDIS_DB, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, WATCH_DOG
+import click
+from flask.cli import with_appcontext
+from flask import current_app
 
 class ErrorNames(Enum):
     config_file_not_exists = 1
@@ -211,7 +214,14 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
 #         raise ValueError("these watch_paths %s doesn't exists." % un_exist_watch_paths, ErrorNames.un_exist_watch_paths)
 #     return wc
 
-def start_watch(app):
+def start_watchdog(app):
     wc: WatchConfig = WatchConfig(app.config[WATCH_PATHES])
     wd = DirWatchDog(wc, app.config[VEDIS_DB])
     wd.watch()
+    app.config[WATCH_DOG] = wd
+
+@click.command('stop-watchdog')
+@with_appcontext
+def stop_watchdog():
+    wd: DirWatchDog = current_app.config[WATCH_DOG]
+    wd.stop_watch()

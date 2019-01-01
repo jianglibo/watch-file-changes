@@ -6,8 +6,8 @@ WATCH_PATHES = [
             ".*"
         ],
         "ignore_regexes": [
-            r"c:Users\admin\AppData\Roaming\\.*",
-            r"c:Users\admin\AppData\Local\\.*",
+            r"c:Users\\admin\AppData\\Roaming\\.*",
+            r"c:Users\\admin\AppData\\Local\\.*",
             r"c:\Windows\\.*",
             r"c:Windows\\.*",
             r".*vedisdb.*"
@@ -22,8 +22,8 @@ WATCH_PATHES = [
             ".*"
         ],
         "ignore_regexes": [
-            r"c:\Users\admin\AppData\Roaming\\.*",
-            r"c:\Users\admin\AppData\Local\\.*",
+            r"c:\\Users\\admin\AppData\\Roaming\\.*",
+            r"c:\\Users\\admin\AppData\\Local\\.*",
             ".*vedisdb.*"
         ],
         "ignore_directories": True,
