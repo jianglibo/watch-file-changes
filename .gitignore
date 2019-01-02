@@ -114,6 +114,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vscode/*
+.vscode/
 testing.py
 config/development.py
 config/production.py

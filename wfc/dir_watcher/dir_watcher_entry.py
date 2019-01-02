@@ -114,10 +114,12 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
         if event.is_directory and self._ignore_directories:
             logging.debug("directory %s ignored.", src_path)
             return
+
         for r in self._ignore_regexes:
             if r.match(src_path):
                 logging.debug("%s hit ignore_regexes %s, skipping...", src_path, r.pattern)
                 return
+            
         if self._has_regexes and (not any([r.match(src_path) for r in self._regexes])):
             logging.debug("%s not in regexes, skipping...", src_path)
             return

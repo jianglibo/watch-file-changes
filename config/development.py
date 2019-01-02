@@ -3,12 +3,10 @@ VEDIS_FILE = "e:/vedisdb"
 WATCH_PATHES = [
     {
         "regexes": [],
-        "ignore_regexes": [
-            r".*",
-        ],
+        "ignore_regexes": [],
         "ignore_directories": True,
         "case_sensitive": False,
-        "path": "c:",
+        "path": "e:/playfield",
         "recursive": True
     }
 ]

@@ -14,8 +14,8 @@ def open_vedis(app):
         vedis_file: str = app.config[VEDIS_FILE]
         app.config[VEDIS_DB] = Vedis(vedis_file)
 
-@click.command('close-vedis')
-@with_appcontext
+# @click.command('close-vedis')
+# @with_appcontext
 def close_vedis(app):
     db: Vedis = app.config[VEDIS_DB]
     if db is not None:
