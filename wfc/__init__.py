@@ -37,9 +37,10 @@ def create_app(test_config=None):
         # keystr: str = ';'.join(app.config.keys())
         r = Response("\n".join(["%s=%s" % (pa[0], pa[1]) for pa in app.config.items()]), mimetype="text/plain")
         return r
+        
     my_vedis.open_vedis(app)
     dir_watcher_entry.start_watchdog(app)
-    app.cli.add_command(dir_watcher_entry.stop_watchdog)
+    # app.cli.add_command(dir_watcher_entry.stop_watchdog)
 
     app.register_blueprint(vedis_bp.bp)
     return app

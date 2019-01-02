@@ -5,7 +5,7 @@ import logging
 from watchdog.observers import Observer
 from watchdog.events import RegexMatchingEventHandler, FileSystemEventHandler
 from typing import NamedTuple, List, Optional, Dict, Any, Iterator, Pattern
-from dir_watch_objects import LoggingSelectiveEventHandler, WatchConfig, DirWatchDog, get_watch_config
+# from dir_watch_objects import LoggingSelectiveEventHandler, WatchConfig, DirWatchDog, get_watch_config
 islinux: bool = 'nux' in sys.platform
 
 import getopt
@@ -18,44 +18,44 @@ def usage(msg):
     else:
         print("usage: dir_watcher.py --config /path-which-exists")
 
-if __name__ == "__main__":
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "", [
-                                   "help", "action=", "config=", "asservice", "debug"])
-    except getopt.GetoptError as err:
-        # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
-        sys.exit(2)
-    asservice = None
-    action = None
-    log_level = logging.WARNING
-    config: Optional[str] = None
-    for o, a in opts:
-        if o == "-v":
-            verbose = True
-        elif o in ("-h", "--help"):
-            usage(None)
-            sys.exit()
-        elif o == '--asservice':
-            asservice = True
-        elif o == '--action':
-            action = a
-        elif o == '--config':
-            config = a
-        elif o == '--debug':
-            log_level = logging.DEBUG
-        else:
-            assert False, "unhandled option"
-    wc: WatchConfig = get_watch_config(config)
-    logging.basicConfig(level=log_level,
-                        format='%(asctime)s - %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-    wd = DirWatchDog(wc)
-    if asservice:
-        pass
-    else:
-        print('starting inactive.')
-        wd.watch()
+# if __name__ == "__main__":
+#     try:
+#         opts, args = getopt.getopt(sys.argv[1:], "", [
+#                                    "help", "action=", "config=", "asservice", "debug"])
+#     except getopt.GetoptError as err:
+#         # print help information and exit:
+#         print(str(err))  # will print something like "option -a not recognized"
+#         sys.exit(2)
+#     asservice = None
+#     action = None
+#     log_level = logging.WARNING
+#     config: Optional[str] = None
+#     for o, a in opts:
+#         if o == "-v":
+#             verbose = True
+#         elif o in ("-h", "--help"):
+#             usage(None)
+#             sys.exit()
+#         elif o == '--asservice':
+#             asservice = True
+#         elif o == '--action':
+#             action = a
+#         elif o == '--config':
+#             config = a
+#         elif o == '--debug':
+#             log_level = logging.DEBUG
+#         else:
+#             assert False, "unhandled option"
+#     wc: WatchConfig = get_watch_config(config)
+#     logging.basicConfig(level=log_level,
+#                         format='%(asctime)s - %(message)s',
+#                         datefmt='%Y-%m-%d %H:%M:%S')
+#     wd = DirWatchDog(wc)
+#     if asservice:
+#         pass
+#     else:
+#         print('starting inactive.')
+#         wd.watch()
 
 # if islinux:
 #     import daemon # pylint: disable=E0401

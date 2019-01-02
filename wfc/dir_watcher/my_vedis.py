@@ -3,6 +3,7 @@ from flask.cli import with_appcontext
 import logging
 from ..constants import VEDIS_DB, VEDIS_FILE
 import click
+from pathlib import Path
 
 
 def open_vedis(app):
@@ -12,7 +13,9 @@ def open_vedis(app):
 
     if VEDIS_DB not in app.config:
         vedis_file: str = app.config[VEDIS_FILE]
-        app.config[VEDIS_DB] = Vedis(vedis_file)
+        vedis_path: Path = Path(vedis_file).resolve()
+        # assert vedis_path.exists()
+        app.config[VEDIS_DB] = Vedis(str(vedis_path))
 
 # @click.command('close-vedis')
 # @with_appcontext

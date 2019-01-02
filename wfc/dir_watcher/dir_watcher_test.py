@@ -6,40 +6,99 @@ from pathlib import Path
 from typing import List, Dict, NamedTuple, Tuple
 from typing_extensions import Final
 import threading, time, logging
+from threading import Lock
 from py._path.local import LocalPath
 
-# from dir_watch_entry import get_watch_config, WatchConfig, WatchPath, DirWatchDog, load_watch_config
-# import threading
-# import pytest
-# from vedis import Vedis # pylint: disable=E0611
 
-# from _pytest.logging import LogCaptureFixture
+# from .dir_watcher_entry import get_watch_config, WatchConfig, WatchPath, DirWatchDog, load_watch_config
+import threading
+import pytest
+from vedis import Vedis # pylint: disable=E0611
+
+from _pytest.logging import LogCaptureFixture
 
 # def get_configfile() -> Path:
 #     return Path(__file__, '..', '..', 'pytest', 'dir_watcher_t.json')
 
-# CONTENT: Final = "content"
+LIST_NAME: Final = 'one-list'
 
-# @pytest.fixture(params=[{"tid": 0, "ignore_regexes": [".*\\.abc"]},
-#     {"tid": 1, "ignore_regexes": [".*\\.txt"]},
-#     {"tid": 2, "ignore_regexes": [r"\w:\\.*"]}])
-# def tp(request, tmpdir: LocalPath):
-#     import math
-#     print(tmpdir.strpath)
-#     dt: Dict = load_watch_config(get_configfile())
-#     wc = get_watch_config(dt)
-#     ignore_regexes = request.param["ignore_regexes"]
-#     tid = request.param["tid"]
-#     wp: WatchPath = common_util.clone_namedtuple(wc.watch_paths[0], path=str(tmpdir), ignore_regexes=ignore_regexes) # type: ignore
-#     wc.watch_paths[0] = wp
-#     wd = DirWatchDog(wc)
-#     yield (tmpdir, wd, tid)  # provide the fixture value
-#     print("teardown watchdog")
-#     # tmpdir.remove()
-#     wd.save_me = False
-#     wd.wait_seconds(10)
+lock_ob: Lock = threading.Lock()
 
-# class TestDirWatcher(object):
+@pytest.fixture
+def db(tmpdir: LocalPath):
+    db_file = Path(tmpdir.strpath).joinpath('db')
+    db: Vedis = Vedis(str(db_file.resolve()))
+    yield (db)  # provide the fixture value
+    print("teardown watchdog")
+    db.close()
+    tmpdir.remove()
+
+class TestDirWatcher(object):
+    def test_true(self, db: Vedis):
+        assert isinstance(db, Vedis)
+
+        def to_run():
+            for _ in range(0, 10):
+                # list_ob: List = db.List(LIST_NAME)
+                with db.transaction():
+                    # lock_ob.acquire(True)
+                    # list_ob.append('hello')
+                    db.lpush(LIST_NAME, 'hello')
+                    # lock_ob.release()
+                time.sleep(0.1)
+
+        ts = []
+            
+        t = threading.Thread(target=to_run, args=())
+        t.start()
+        assert t.is_alive()
+        ts.append(t.ident)
+        t = threading.Thread(target=to_run, args=())
+        t.start()
+
+        ts.append(t.ident)
+        # len_list: List[int] = []
+        list_ob: List = db.List(LIST_NAME)
+        for _ in range(0, 10):
+            # list_ob.append('hello')
+            db.lpush(LIST_NAME, 'hello')
+            # lock_ob.acquire(True)
+            # len_list.append(db.llen(LIST_NAME))
+            # lock_ob.release()
+            # time.sleep(0.2)
+        time.sleep(3)
+        assert db.llen(LIST_NAME) == 30
+
+        assert ts[0] != ts[1]
+
+    def test_open_close(self, tmpdir: LocalPath):
+        db_file = Path(tmpdir.strpath).joinpath('db1')
+        db_file_str = str(db_file.resolve())
+        tt: int = 1000
+        start_time = time.time()
+        for _ in range(0, tt):
+            with Vedis(db_file_str) as db:
+                db.lpush(LIST_NAME, 'hello')
+        db = Vedis(db_file_str)
+        assert db.llen(LIST_NAME) == tt
+        elapsed_time = time.time() - start_time
+
+        assert elapsed_time > 20
+
+    def test_open(self, tmpdir: LocalPath):
+        db_file = Path(tmpdir.strpath).joinpath('db2')
+        db_file_str = str(db_file.resolve())
+        start_time = time.time()
+        db: Vedis = Vedis(db_file_str)
+        tt: int = 1000
+        for _ in range(0, tt):
+            with db.transaction():
+                db.lpush(LIST_NAME, 'hello')
+        assert db.llen(LIST_NAME) == tt
+        db.close()
+        elapsed_time = time.time() - start_time
+
+        assert elapsed_time > 10
 
 #     def test_create_file(self, tmp_path):
 #         d = tmp_path / "sub"

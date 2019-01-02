@@ -1,4 +1,4 @@
-from typing import Set, Dict
+from typing import Set, Dict, List
 
 class Vedis():
 
@@ -19,6 +19,18 @@ class Vedis():
     def hlen(self, hash_key: str) -> int: ...
     
     def scard(self, key: str) -> int: ...
+
+    def close(self) -> None: ...
+
+    def llen(self, key:str) -> int: ...
+    
+    def List(self, key: str): ...
+
+    def lpush(self,lname: str, value: str): ...
+    
+    def transaction(self): ...
+    
+
 
     
     
