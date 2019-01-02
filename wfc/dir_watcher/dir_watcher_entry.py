@@ -134,22 +134,22 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
 
     def on_moved(self, event):
         what = 'directory' if event.is_directory else 'file'
-        logging.debug("Moved %s: from %s to %s", what, event.src_path,
-                     event.dest_path)
-        self.db.sadd(V_MOVED_SET_TABLE, "%s|%s" % (event.src_path, event.dest_path))
-        self.db.commit()
+        logging.debug("Moved %s: from %s to %s", what, event.src_path, event.dest_path)
+        with self.db.transaction():
+            self.db.sadd(V_MOVED_SET_TABLE, "%s|%s" % (event.src_path, event.dest_path))
 
     def on_created(self, event):
         what = 'directory' if event.is_directory else 'file'
         logging.debug("Created %s: %s", what, event.src_path)
-        self.db.sadd(V_CREATED_SET_TABLE, event.src_path)
-        self.db.commit()
+        with self.db.transaction():
+            self.db.sadd(V_CREATED_SET_TABLE, event.src_path)
+
 
     def on_deleted(self, event):
-        self.db.sadd(V_DELETED_SET_TABLE, event.src_path)
-        self.db.commit()
         what = 'directory' if event.is_directory else 'file'
         logging.debug("Deleted %s: %s", what, event.src_path)
+        with self.db.transaction():
+            self.db.sadd(V_DELETED_SET_TABLE, event.src_path)
 
     def on_modified(self, event):
         src_path = event.src_path
@@ -169,8 +169,8 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
                 logging.debug("Modified size_time not changed. %s: %s", what, src_path)
             else:
                 logging.debug("Modified really %s: %s", what, src_path)
-                self.db.sadd(V_MODIFIED_REALLY_SET_TABLE, src_path)
-                self.db.commit()
+                with self.db.transaction():
+                    self.db.sadd(V_MODIFIED_REALLY_SET_TABLE, src_path)
 
 # def load_watch_config(pathname: Union[None, str, Path]) -> Dict[str, Any]:
 #     cp: Path
