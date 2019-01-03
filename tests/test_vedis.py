@@ -1,6 +1,6 @@
 import pytest
 import wfc
-from wfc.dir_watcher import my_vedis
+import my_vedis
 from flask import Response
 import json
 
@@ -16,13 +16,12 @@ def client():
 
     yield client
 
-    my_vedis.close_vedis(app)
+    # my_vedis.close_vedis(app)
 
 
 def test_open_vedis():
     app = wfc.create_app()
     assert app.config['ENV'] == 'testing'
-    assert app.config[my_vedis.VEDIS_DB]
 
 def test_get_modified(client):
     rv: Response = client.get('/vedis/list-created')

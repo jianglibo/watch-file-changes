@@ -10,13 +10,14 @@ from vedis import Vedis # pylint: disable=E0611
 from collections import namedtuple
 from typing_extensions import Final
 from enum import Enum
-from ..constants import WATCH_PATHES, VEDIS_DB, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, WATCH_DOG, V_CHANGED_LIST_TABLE
+from ..constants import WATCH_PATHES, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, WATCH_DOG, V_CHANGED_LIST_TABLE
 import click
 from flask.cli import with_appcontext
 from flask import current_app
 from os import stat_result
 from threading import Lock
 import threading
+from .. import my_vedis
 
 class ErrorNames(Enum):
     config_file_not_exists = 1
@@ -50,31 +51,18 @@ class WatchConfig():
         for wp in watch_pathes:
             wp['path'] = Path(wp['path']).expanduser()
         self.watch_paths: List[WatchPath] = [WatchPath(**p) for p in watch_pathes]
+        logging.info('with %s to watch.', self.watch_paths)
 
     def get_un_exists_paths(self) -> List[WatchPath]:
         return [wp for wp in self.watch_paths if not wp.path.exists()]
 
 
 class DirWatchDog():
-    def __init__(self, wc: WatchConfig, db: Vedis, lock: Lock) -> None:
+    def __init__(self, wc: WatchConfig) -> None:
         self.wc = wc
-        self.db = db
         self.save_me = True
-        self.lock = lock
         self.observers : List[Observer] = []
 
-    def get_modified_number(self):
-        return self.db.scard(V_MODIFIED_REALLY_SET_TABLE)
-
-    def get_created_number(self):
-        return self.db.scard(V_CREATED_SET_TABLE)
-
-    def get_deleted_number(self):
-        return self.db.scard(V_DELETED_SET_TABLE)
-    
-    def get_moved_number(self):
-        return self.db.scard(V_MOVED_SET_TABLE)
-    
     def wait_seconds(self, seconds: int) -> None:
         for obs in self.observers:
             obs.join(seconds)
@@ -82,8 +70,6 @@ class DirWatchDog():
     def watch(self) -> None:
         for ps in self.wc.watch_paths:
             event_handler = LoggingSelectiveEventHandler(
-                self.db,
-                self.lock,
                 regexes=ps.regexes,
                 ignore_regexes=ps.ignore_regexes,
                 ignore_directories=ps.ignore_directories,
@@ -97,19 +83,17 @@ class DirWatchDog():
     def stop_watch(self):
         for obs in self.observers:
             obs.stop()
-            self.db.close()
 
 class LoggingSelectiveEventHandler(FileSystemEventHandler):
     """
     Logs all the events captured.
     """
 
-    def __init__(self,db: Vedis, lock: Lock, regexes: List[str]=[r".*"], ignore_regexes: List[str]=[],
+    def __init__(self, regexes: List[str]=[r".*"], ignore_regexes: List[str]=[],
                  ignore_directories: bool =False, case_sensitive: bool=False):
         super(LoggingSelectiveEventHandler, self).__init__()
         self._regexes: List[Pattern]
         self._ignore_regexes: List[Pattern]
-        self.lock = lock
 
         if case_sensitive:
             self._regexes = [re.compile(r) for r in regexes]
@@ -119,7 +103,6 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
             self._ignore_regexes = [re.compile(r, re.I) for r in ignore_regexes]
         self._ignore_directories = ignore_directories
         self._case_sensitive = case_sensitive
-        self.db = db
         self._has_regexes = len(self._regexes) > 0
         logging.debug("create regexes: %s, ignore_regexes: %s", regexes, ignore_regexes)
 
@@ -164,139 +147,61 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
     def on_moved(self, event):
         what = 'directory' if event.is_directory else 'file'
         try:
-            self.lock.acquire(True)
-            logging.error(self.lock)
-            with self.db.transaction():
-                # self.db.sadd(V_MOVED_SET_TABLE, "%s|%s" % (event.src_path, event.dest_path))
-                cf: FileChange = FileChange(fn=event.src_path, ct=ChangeType.moved, cv=event.dest_path, stat=self.get_stat(event.dest_path))
-                self.db.lpush(V_CHANGED_LIST_TABLE, json.dumps(cf.to_dict()))
-                self.db.commit()
+            cf: FileChange = FileChange(fn=event.src_path, ct=ChangeType.moved, cv=event.dest_path, stat=self.get_stat(event.dest_path))
+            my_vedis.data_queque.put(json.dumps(cf.to_dict()))
         except Exception as e:
             logging.error(e, exc_info=True)
-            logging.error("Moved %s: from %s to %s faild.", what, event.src_path, event.dest_path)
+            logging.error("Moved %s: from %s to %s failed.", what, event.src_path, event.dest_path)
         finally:
-            self.lock.release()
+            pass
 
 
     def on_created(self, event):
         what = 'directory' if event.is_directory else 'file'
         try:
-            self.lock.acquire(True)
-            logging.error(self.lock)
-            with self.db.transaction():
-                # self.db.sadd(V_CREATED_SET_TABLE, event.src_path)
-                cf: FileChange = FileChange(fn=event.src_path ,ct=ChangeType.created, cv=None, stat=self.get_stat(event.src_path))
-                self.db.lpush(V_CHANGED_LIST_TABLE, json.dumps(cf.to_dict()))
-                self.db.commit()
+            cf: FileChange = FileChange(fn=event.src_path ,ct=ChangeType.created, cv=None, stat=self.get_stat(event.src_path))
+            my_vedis.data_queque.put(json.dumps(cf.to_dict()))
         except Exception as e:
             logging.error(e, exc_info=True)
             logging.error("Created %s: %s failed.", what, event.src_path)
         finally:
-            self.lock.release()
+            pass
 
 
     def on_deleted(self, event):
         what = 'directory' if event.is_directory else 'file'
-        logging.error(self.lock)
-        self.lock.acquire(True)
         try:
-            with self.db.transaction():
-                # self.db.sadd(V_DELETED_SET_TABLE, event.src_path)
-                cf: FileChange = FileChange(fn=event.src_path, ct=ChangeType.deleted, cv=None, stat=None)
-                self.db.lpush(V_CHANGED_LIST_TABLE, json.dumps(cf.to_dict()))
-                self.db.commit()
+            cf: FileChange = FileChange(fn=event.src_path, ct=ChangeType.deleted, cv=None, stat=None)
+            my_vedis.data_queque.put(json.dumps(cf.to_dict()))
         except Exception as e:
             logging.error(e, exc_info=True)
             logging.error("Deleted %s: %s failed.", what, event.src_path)
         finally:
-            self.lock.release()
+            pass
 
     def on_modified(self, event):
         src_path = event.src_path
         what = 'directory' if event.is_directory else 'file'
         try:  
-            logging.error(self.lock)
-            self.lock.acquire(True)
-            with self.db.transaction():
-                cf: FileChange = FileChange(fn= src_path, ct=ChangeType.modified, cv=None, stat=self.get_stat(src_path))
-                self.db.lpush(V_CHANGED_LIST_TABLE, json.dumps(cf.to_dict()))
-                self.db.commit()
+            cf: FileChange = FileChange(fn= src_path, ct=ChangeType.modified, cv=None, stat=self.get_stat(src_path))
+            my_vedis.data_queque.put(json.dumps(cf.to_dict()))
         except Exception as e:
             logging.error(e, exc_info=True)
             logging.error("Modify %s: %s failed.", what, event.src_path)
         finally:
-            self.lock.release()
+            pass
 
-        # size_mtime = self.db.hget(V_MODIFIED_HASH_TABLE, src_path)
-        # if size_mtime is None:
-        #     size_mtime = self.stat_tostring(src_path)
-        #     if size_mtime is None:
-        #         logging.error("stat error %s: %s", what, src_path)
-        #     else:
-        #         self.db.hset(V_MODIFIED_HASH_TABLE, src_path, size_mtime)
-        #     logging.debug("Modified Not in db %s: %s", what, src_path)
-        # else:
-        #     self.db.incr(src_path)
-        #     n_size_time = self.stat_tostring(src_path)
-        #     if size_mtime == n_size_time:
-        #         logging.debug("Modified size_time not changed. %s: %s", what, src_path)
-        #     else:
-        #         logging.debug("Modified really %s: %s", what, src_path)
-        #         with self.db.transaction():
-        #             self.db.sadd(V_MODIFIED_REALLY_SET_TABLE, src_path)
-
-# def load_watch_config(pathname: Union[None, str, Path]) -> Dict[str, Any]:
-#     cp: Path
-#     islinux: bool = 'nux' in sys.platform
-
-#     if islinux:
-#         cf = "dir_watcher_nux.json"
-#     else:
-#         cf = "dir_watcher.json"
-
-#     if not pathname:
-#         if getattr(sys, 'frozen', False):
-#             # frozen
-#             f_ = Path(sys.executable)
-#         else:
-#             # unfrozen
-#             f_ = Path(__file__)
-#         cp = f_.parent.parent / cf
-#         if not cp.exists():
-#             cp = f_.parent / cf
-#     elif isinstance(pathname, Path):
-#         cp = pathname
-#     else:
-#         cp = Path(pathname)
-
-#     if not cp.exists():
-#         raise ValueError("config file %s doesn't exists." % pathname, ErrorNames.config_file_not_exists)
-#     print("with config file %s" % str(cp.absolute().resolve()))
-
-#     with cp.open() as f:
-#         content = f.read()
-#     j: Dict[str, Any] = json.loads(content)
-#     return j
-
-# def get_watch_config(pathname: Union[Optional[str], Optional[Path], Dict]) -> WatchConfig:
-#     if (pathname is None) or (isinstance(pathname, str)) or (isinstance(pathname, Path)):
-#         wc = WatchConfig(load_watch_config(pathname))
-#     else:
-#         wc = WatchConfig(pathname)
-
-#     un_exist_watch_paths = wc.get_un_exists_paths()
-#     if len(un_exist_watch_paths) > 0:
-#         raise ValueError("these watch_paths %s doesn't exists." % un_exist_watch_paths, ErrorNames.un_exist_watch_paths)
-#     return wc
+dir_watch_dog: Optional[DirWatchDog] = None
 
 def start_watchdog(app):
+    global dir_watch_dog
     wc: WatchConfig = WatchConfig(app.config[WATCH_PATHES])
-    wd = DirWatchDog(wc, app.config[VEDIS_DB], threading.Lock())
-    wd.watch()
-    app.config[WATCH_DOG] = wd
+    dir_watch_dog = DirWatchDog(wc)
+    dir_watch_dog.watch()
+    # app.config[WATCH_DOG] = wd
 
-@click.command('stop-watchdog')
-@with_appcontext
-def stop_watchdog():
-    wd: DirWatchDog = current_app.config[WATCH_DOG]
-    wd.stop_watch()
+# @click.command('stop-watchdog')
+# @with_appcontext
+# def stop_watchdog():
+#     wd: DirWatchDog = current_app.config[WATCH_DOG]
+#     wd.stop_watch()

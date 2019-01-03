@@ -1,12 +1,31 @@
 from flask import Flask
 from flask import Config
 from flask import Response
-from .dir_watcher import my_vedis
+from . import my_vedis
 from .dir_watcher import dir_watcher_entry
 import os, sys
-from .constants import OUT_CONFIG_FILE
+from .constants import OUT_CONFIG_FILE, VEDIS_FILE
 from . import vedis_bp
-from typing import Dict
+from typing import Dict, List
+from logging.config import dictConfig
+from . import my_signal
+import threading
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
 
 def find_data_file(filename):
     if getattr(sys, 'frozen', False):
@@ -18,7 +37,6 @@ def find_data_file(filename):
         datadir = os.path.dirname(__file__)
 
     return os.path.join(datadir, filename)
-
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     try:
@@ -34,11 +52,13 @@ def create_app(test_config=None):
 
     @app.route('/')
     def hello_world(): # pylint: disable=W0612
-        # keystr: str = ';'.join(app.config.keys())
-        r = Response("\n".join(["%s=%s" % (pa[0], pa[1]) for pa in app.config.items()]), mimetype="text/plain")
+        info_pairs: List[str] = ["%s=%s" % (pa[0], pa[1]) for pa in app.config.items()]
+        info_pairs.append('thread_identity=%s' % threading.get_ident())
+        info_pairs.append('main_thread_identity=%s' % threading.main_thread())
+        r = Response("\n".join(info_pairs), mimetype="text/plain")
         return r
-        
-    my_vedis.open_vedis(app)
+    my_vedis.init_app(app)
+
     dir_watcher_entry.start_watchdog(app)
     # app.cli.add_command(dir_watcher_entry.stop_watchdog)
 

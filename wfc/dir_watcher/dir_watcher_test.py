@@ -58,7 +58,7 @@ class TestDirWatcher(object):
 
         ts.append(t.ident)
         # len_list: List[int] = []
-        list_ob: List = db.List(LIST_NAME)
+        # list_ob: List = db.List(LIST_NAME)
         for _ in range(0, 10):
             # list_ob.append('hello')
             db.lpush(LIST_NAME, 'hello')

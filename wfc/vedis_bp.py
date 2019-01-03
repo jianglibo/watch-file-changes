@@ -4,7 +4,7 @@ from flask import (
 from werkzeug.exceptions import abort
 from werkzeug.datastructures import ImmutableMultiDict 
 from flask import current_app, Response, request, Request
-from .constants import VEDIS_DB, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CHANGED_LIST_TABLE
+from .constants import V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CHANGED_LIST_TABLE
 from vedis import Vedis # pylint: disable=E0611
 import os
 from typing import Set, Optional, AnyStr, Iterable, Dict, Tuple, List
@@ -12,6 +12,7 @@ from mypy_extensions import TypedDict
 from logging import Logger
 from .typed_value import get_current_app, get_current_request, get_current_args
 import json
+from . import my_vedis
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
 
@@ -25,7 +26,7 @@ class ListStrDict(TypedDict):
 
 def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfTupleDict:
     logger: Logger = app.logger
-    db: Vedis = app.config[VEDIS_DB]
+    db: Vedis = my_vedis.get_db()
     try:
         if length_only:
             d = ListOfTupleDict(length=db.hlen(table_name), values=[])
@@ -40,7 +41,7 @@ def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfT
 
 def get_set_content(app, table_name: str, length_only: bool=False) -> ListStrDict:
     logger: Logger = app.logger
-    db: Vedis = app.config[VEDIS_DB]
+    db: Vedis = my_vedis.get_db()
     try:
         if length_only:
             d = ListStrDict(length=db.scard(table_name), values=[])
@@ -55,7 +56,7 @@ def get_set_content(app, table_name: str, length_only: bool=False) -> ListStrDic
 
 def get_list_content(app, table_name: str, length_only: bool=False) -> ListStrDict:
     logger: Logger = app.logger
-    db: Vedis = app.config[VEDIS_DB]
+    db: Vedis = my_vedis.get_db()
     try:
         if length_only:
             d = ListStrDict(length=db.llen(table_name), values=[])
@@ -68,44 +69,45 @@ def get_list_content(app, table_name: str, length_only: bool=False) -> ListStrDi
         d = ListStrDict(length=0, values=[])
     return d
 
-@bp.route('/list-modified', methods=['GET'])
-def list_modified():
-    length_only = get_current_args().get('length-only', None, bool)
-    d: ListStrDict = get_set_content(current_app, V_MODIFIED_REALLY_SET_TABLE, length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
-
-@bp.route('/list-created', methods=['GET'])
-def list_created():
-    length_only = get_current_args().get('length-only', None, bool)
-    d = get_set_content(current_app, V_CREATED_SET_TABLE, length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
-
-@bp.route('/list-deleted', methods=['GET'])
-def list_deleted():
-    length_only = get_current_args().get('length-only', None, bool)
-    d = get_set_content(current_app, V_DELETED_SET_TABLE, length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
-
-@bp.route('/list-moved', methods=['GET'])
-def list_moved():
-    length_only = get_current_args().get('length-only', None, bool)
-    d = get_set_content(current_app, V_MOVED_SET_TABLE, length_only=length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
-
-@bp.route('/list-modified-hash', methods=['GET'])
-def list_modified_hash():
-    length_only = get_current_args().get('length-only', None, bool)
-    d: ListOfTupleDict = get_hash_content(current_app, V_MODIFIED_HASH_TABLE, length_only=length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
-
 @bp.route('/list', methods=['GET'])
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
     d: ListOfTupleDict = get_list_content(current_app, V_CHANGED_LIST_TABLE, length_only=length_only)
     r = Response(json.dumps(d), mimetype="text/plain")
     return r
+
+# @bp.route('/list-modified', methods=['GET'])
+# def list_modified():
+#     length_only = get_current_args().get('length-only', None, bool)
+#     d: ListStrDict = get_set_content(current_app, V_MODIFIED_REALLY_SET_TABLE, length_only)
+#     r = Response(json.dumps(d), mimetype="text/plain")
+#     return r
+
+# @bp.route('/list-created', methods=['GET'])
+# def list_created():
+#     length_only = get_current_args().get('length-only', None, bool)
+#     d = get_set_content(current_app, V_CREATED_SET_TABLE, length_only)
+#     r = Response(json.dumps(d), mimetype="text/plain")
+#     return r
+
+# @bp.route('/list-deleted', methods=['GET'])
+# def list_deleted():
+#     length_only = get_current_args().get('length-only', None, bool)
+#     d = get_set_content(current_app, V_DELETED_SET_TABLE, length_only)
+#     r = Response(json.dumps(d), mimetype="text/plain")
+#     return r
+
+# @bp.route('/list-moved', methods=['GET'])
+# def list_moved():
+#     length_only = get_current_args().get('length-only', None, bool)
+#     d = get_set_content(current_app, V_MOVED_SET_TABLE, length_only=length_only)
+#     r = Response(json.dumps(d), mimetype="text/plain")
+#     return r
+
+# @bp.route('/list-modified-hash', methods=['GET'])
+# def list_modified_hash():
+#     length_only = get_current_args().get('length-only', None, bool)
+#     d: ListOfTupleDict = get_hash_content(current_app, V_MODIFIED_HASH_TABLE, length_only=length_only)
+#     r = Response(json.dumps(d), mimetype="text/plain")
+#     return r
+
