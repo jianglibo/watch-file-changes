@@ -23,38 +23,33 @@ def init_app(app):
     global vedis_thread
     vedis_thread = _start_db_work(app)
 
-def _db_thread_long_connect(db_file: str):
-    retrying: Optional[str] = None
-    db = Vedis(db_file)
+def _insert_to_db(db: Vedis, item: str):
     cc: int = 0
     while True:
-        from_queue = False
+        cc = cc + 1
         try:
-            if retrying is not None:
-                time.sleep(0.2)
-                item = retrying
-                retrying = None
-                cc = cc + 1
-                if cc > 10:
-                    db.close()
-                    db = Vedis(db_file)
-            else:
-                item = data_queque.get()
-                from_queue = True
-                cc = 0
+            with db.transaction():
+                db.lpush(V_CHANGED_LIST_TABLE, item)
+                db.commit()
+            break
+        except:
+            time.sleep(0.2)
+            logging.error('insert item %s failed. retring %s', item, cc)
+
+
+def _db_thread_long_connect(db_file: str):
+    db = Vedis(db_file)
+    while True:
+        try:
+            item = data_queque.get()
             if item is None:
                 db.close()
                 break
-            try:
-                with db.transaction():
-                    db.lpush(V_CHANGED_LIST_TABLE, item)
-                    db.commit()
-                retrying = None
-            except:
-                logging.error('insert item %s failed. retring %s', item, cc)
-                retrying = item
-            if from_queue:
-                data_queque.task_done()
+            elif isinstance(item, str):
+                _insert_to_db(db, item)
+            else:
+                pass
+            data_queque.task_done()
         except Exception as e:
             logging.error(e, exc_info=True)
         finally:

@@ -10,13 +10,7 @@ def client():
     app = wfc.create_app()
     app.config['TESTING'] = True
     client = app.test_client()
-
-    # with app.app_context():
-    #     init_db()
-
     yield client
-
-    # my_vedis.close_vedis(app)
 
 
 def test_open_vedis():
