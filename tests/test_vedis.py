@@ -1,6 +1,6 @@
 import pytest
 import wfc
-import my_vedis
+from wfc import my_vedis
 from flask import Response
 import json
 
@@ -20,5 +20,4 @@ def test_open_vedis():
 def test_get_modified(client):
     rv: Response = client.get('/vedis/list-created')
     r = json.loads(rv.get_data(as_text=True))
-
     assert r['values'] == []
