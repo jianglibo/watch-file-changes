@@ -11,7 +11,7 @@ from ..constants import V_CHANGED_LIST_TABLE, V_CREATED_SET_TABLE, \
 from flask import Flask, current_app
 from flask.cli import with_appcontext
 from typing_extensions import Final
-from vedis import Vedis
+from vedis import Vedis  # pylint: disable=E0611
 from watchdog.events import FileSystemEvent, FileSystemEventHandler, \
     RegexMatchingEventHandler
 from watchdog.observers import Observer

@@ -10,8 +10,8 @@ import threading, time
 from threading import Thread, Lock, Event
 from typing import Optional, List
 import schedule
+import itertools
 
-data_queue: Queue = Queue()
 controll_queue: Queue = Queue()
 
 lock: Lock = Lock()
@@ -20,10 +20,18 @@ cease_schedule_run: Event = threading.Event()
 
 def init_app(app):
     app.teardown_appcontext(close_db)
-    DbThread(app.config[VEDIS_FILE], data_queue, cease_db_run).start()
+    file_change_queue: Queue = Queue()
+    batch_file_change_queue: Queue = Queue()
+    DbThread(app.config[VEDIS_FILE], file_change_queue, batch_file_change_queue).start()
     ScheduleThread(cease_schedule_run).start()
 
 class DbThread(threading.Thread):
+    def __init__(self, db_file:str,file_change_queue: Queue, batch_file_change_queue: Queue, **kwargs):
+        super().__init__(**kwargs)
+        self.db = Vedis(db_file)
+        self.file_change_queue: Queue = file_change_queue
+        self.batch_file_change_queue: Queue = batch_file_change_queue
+    
     def _insert_to_db(self, item: str):
         cc: int = 0
         while True:
@@ -39,24 +47,34 @@ class DbThread(threading.Thread):
             except:
                 time.sleep(0.2)
 
-    def __init__(self, db_file:str,data_queue: Queue, cease_event: Event,  **kwargs):
-        super().__init__(**kwargs)
-        self.db = Vedis(db_file)
-        self.data_queue = data_queue
-        self.cease_event = cease_event
+    def process_file_change(self, number: int):
+        items: List[bytes] = []
+        with self.db.transaction():
+            item = self.db.lpop(V_CHANGED_LIST_TABLE)
+            idx: int = 0
+            while item is not None:
+                items.append(item)
+                idx += 1
+                if number > 0 and idx >= number:
+                    break
+                item = self.db.lpop(V_CHANGED_LIST_TABLE)
+            self.db.commit()
+        self.batch_file_change_queue.put(items)
 
     def run(self):
-        while not self.cease_event.is_set():
+        while True:
             try:
-                item = self.data_queue.get()
+                item = self.file_change_queue.get()
                 if item is None:
                     self.db.close()
                     break
                 elif isinstance(item, str):
                     self._insert_to_db(item)
+                elif isinstance(item, int):
+                    self.process_file_change(item)
                 else:
-                    pass
-                self.data_queue.task_done()
+                    logging.error("unknonw data receive in dbthread.")
+                self.file_change_queue.task_done()
             except Exception as e:
                 logging.error(e, exc_info=True)
             finally:
@@ -76,6 +94,25 @@ class ScheduleThread(threading.Thread):
         schedule.every(10).seconds.do(self.job)
         while not self.cease_event.is_set():
             schedule.run_pending()
+            time.sleep(1)
+
+class BatchProcessThread(threading.Thread):
+    def __init__(self, batch_file_change_queue: Queue, **kwargs):
+        super().__init__(**kwargs)
+        self.batch_file_change_queue: Queue = batch_file_change_queue
+
+    def run(self):
+        while True:
+            try:
+                item: List[bytes] = self.batch_file_change_queue.get()
+                if item is None:
+                    break
+                assert isinstance(item, list)
+                self.batch_file_change_queue.task_done()
+            except Exception as e:
+                logging.error(e, exc_info=True)
+            finally:
+                pass
             time.sleep(1)
 
 def get_db():
