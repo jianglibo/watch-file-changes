@@ -118,3 +118,4 @@ dmypy.json
 testing.py
 config/development.py
 config/production.py
+.idea/

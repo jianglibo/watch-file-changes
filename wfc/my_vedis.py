@@ -11,7 +11,7 @@ from threading import Thread, Lock, Event
 from typing import Optional, List
 import schedule
 
-data_queque: Queue = Queue()
+data_queue: Queue = Queue()
 controll_queue: Queue = Queue()
 
 lock: Lock = Lock()
@@ -20,17 +20,16 @@ cease_schedule_run: Event = threading.Event()
 
 def init_app(app):
     app.teardown_appcontext(close_db)
-    DbThread(app.config[VEDIS_FILE]).start()
-    ScheduleThread().start()
+    DbThread(app.config[VEDIS_FILE], data_queue, cease_db_run).start()
+    ScheduleThread(cease_schedule_run).start()
 
 class DbThread(threading.Thread):
-
     def _insert_to_db(self, item: str):
         cc: int = 0
         while True:
             cc = cc + 1
             if cc > 6:
-                logging.error('insert item %s failed, after tring 6 times, giving up.', item)
+                logging.error('insert item %s failed, after trying 6 times, giving up.', item)
                 break
             try:
                 with self.db.transaction():
@@ -40,14 +39,16 @@ class DbThread(threading.Thread):
             except:
                 time.sleep(0.2)
 
-    def __init__(self, db_file:str, **kwargs):
+    def __init__(self, db_file:str,data_queue: Queue, cease_event: Event,  **kwargs):
         super().__init__(**kwargs)
         self.db = Vedis(db_file)
+        self.data_queue = data_queue
+        self.cease_event = cease_event
 
     def run(self):
-        while not cease_db_run.is_set():
+        while not self.cease_event.is_set():
             try:
-                item = data_queque.get()
+                item = self.data_queue.get()
                 if item is None:
                     self.db.close()
                     break
@@ -55,22 +56,25 @@ class DbThread(threading.Thread):
                     self._insert_to_db(item)
                 else:
                     pass
-                data_queque.task_done()
+                self.data_queue.task_done()
             except Exception as e:
                 logging.error(e, exc_info=True)
             finally:
                 pass
+        else:
+            self.db.close()
 
 class ScheduleThread(threading.Thread):
     def job(self):
         print("I'm working...%s" % time.asctime())
 
-    def __init__(self, **kwargs):
+    def __init__(self, cease_event: Event,  **kwargs):
         super().__init__(**kwargs)
+        self.cease_event = cease_event
 
     def run(self):
         schedule.every(10).seconds.do(self.job)
-        while not cease_schedule_run.is_set():
+        while not self.cease_event.is_set():
             schedule.run_pending()
             time.sleep(1)
 
@@ -146,7 +150,7 @@ def close_db(e=None):
 #     while True:
 #         cc = cc + 1
 #         if cc > 6:
-#             logging.error('insert item %s failed, after tring 6 times, giving up.', item)
+#             logging.error('insert item %s failed, after trying 6 times, giving up.', item)
 #             break
 #         try:
 #             with db.transaction():

@@ -36,6 +36,10 @@ class Vedis():
     
     def __exit__(self, exc_type, exc_val, exc_tb): ...
     
+    def Hash(self, name: str) -> Dict: ...
+    
+    def hget(self, hash_key:str, val_key: str) -> bytes: ...
+    
 
 
     

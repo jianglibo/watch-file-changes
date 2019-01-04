@@ -4,10 +4,11 @@ from flask import Response
 from . import my_vedis
 from .dir_watcher import dir_watcher_entry
 import os, sys
-from .constants import OUT_CONFIG_FILE, VEDIS_FILE
+from .constants import OUT_CONFIG_FILE, VEDIS_FILE, WATCH_PATHES
 from . import vedis_bp
 from typing import Dict, List
 from logging.config import dictConfig
+import logging
 from . import my_signal
 import threading
 
@@ -35,9 +36,9 @@ def find_data_file(filename):
         # The application is not frozen
         # Change this bit to match where you store your data files:
         datadir = os.path.dirname(__file__)
-
     return os.path.join(datadir, filename)
-def create_app(test_config=None):
+
+def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True, test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     try:
         app.config.from_object('config.default') # a string or an actual config object.
@@ -45,7 +46,7 @@ def create_app(test_config=None):
         # app.config.from_envvar('abc') # app.config.from_pyfile(os.environ['abc'])
         app.config.from_object('config.%s' % app.config['ENV']) # a string or an actual config object.
     except Exception as e:
-        print(e)
+        logging.error(e, exc_info=True)
 
     if OUT_CONFIG_FILE in os.environ:
         app.config.from_envvar(OUT_CONFIG_FILE) # app.config.from_pyfile(os.environ['abc'])
@@ -57,12 +58,12 @@ def create_app(test_config=None):
         info_pairs.append('main_thread_identity=%s' % threading.main_thread())
         r = Response("\n".join(info_pairs), mimetype="text/plain")
         return r
-    my_vedis.init_app(app)
 
-    dir_watcher_entry.start_watchdog(app)
-    # app.cli.add_command(dir_watcher_entry.stop_watchdog)
-
-    app.register_blueprint(vedis_bp.bp)
+    if init_vedis: my_vedis.init_app(app)
+    if init_watch_dog:
+        dwd = dir_watcher_entry.start_watchdog(app.config[WATCH_PATHES], my_vedis.data_queue)
+        dir_watcher_entry.dir_watch_dog = dwd
+    if register_vedis: app.register_blueprint(vedis_bp.bp)
     return app
         
 
