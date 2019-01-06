@@ -11,11 +11,11 @@ import json
 import wfc
 from pathlib import Path
 from queue import Queue
-from threading import Event
 from wfc.constants import V_CHANGED_LIST_TABLE
 from wfc.dir_watcher import dir_watcher_entry
-from wfc.dir_watcher.dir_watcher_entry import FileChange
+from wfc.dir_watcher.watch_values import FileChange, decode_file_change
 from wfc.my_vedis import DbThread, BatchProcessThread
+# from wfc.dir_watcher.dir_init_thread import DirInitThread
 
 
 @pytest.fixture
@@ -50,7 +50,6 @@ def db_thread(db_file_path: Path):
     dbt.file_change_queue.put(None)
 
 
-
 @pytest.fixture(params=[{"tid": 0, "watch_paths": [{
         "regexes": [
             ".*"
@@ -68,6 +67,7 @@ def dir_watcher(request, db_thread: DbThread, tmpdir: LocalPath):
     watch_paths[0]['path'] = td.join('dd').mkdir()
     dwd = dir_watcher_entry.start_watchdog(watch_paths, db_thread.file_change_queue)
     bpt: BatchProcessThread = BatchProcessThread(db_thread.batch_file_change_queue)
+    # dir_init_thread = DirInitThread(db_thread.file_change_queue, )
     yield (db_thread, dwd, request.param['tid'], watch_paths, bpt)
     dwd.stop_watch()
     bpt.batch_file_change_queue.put(None)
@@ -95,8 +95,8 @@ def test_queue_db(db_thread: DbThread):
 def test_watch_db(dir_watcher: Tuple[DbThread, dir_watcher_entry.DirWatchDog, int, List[Dict], BatchProcessThread]):
     db_thread: DbThread = dir_watcher[0]
     db_thread.start()
-    dir_watch_dog: dir_watcher_entry.DirWatchDog = dir_watcher[1]
-    tid: int = dir_watcher[2]
+    # dir_watch_dog: dir_watcher_entry.DirWatchDog = dir_watcher[1]
+    # tid: int = dir_watcher[2]
     one_path: Dict = dir_watcher[3][0]
     test_path = Path(one_path['path'])
     btp: BatchProcessThread = dir_watcher[4]
@@ -108,7 +108,7 @@ def test_watch_db(dir_watcher: Tuple[DbThread, dir_watcher_entry.DirWatchDog, in
     time.sleep(1)
     changed_list = db_thread.db.List(V_CHANGED_LIST_TABLE)
     for item in changed_list:
-        fc: FileChange = FileChange.from_json_str(item)
+        fc: FileChange = decode_file_change(item)
         print(fc)
     assert len(changed_list) == 2  # create and change event.
 
@@ -128,7 +128,7 @@ def test_file_change_equal(db_file_path: Path):
     stat1: stat_result = db_file_path.stat()
     stat2 = Path(str(db_file_path)).stat()
     assert stat1 == stat2
-    _ = db_file_path.read_text()
+    db_file_path.read_text()
     time.sleep(0.5)
     stat3 = Path(str(db_file_path)).stat()
     assert stat1 == stat3

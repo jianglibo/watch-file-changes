@@ -1,18 +1,19 @@
-import os, io, sys
-import unittest
-import common_util
-from global_static import PyGlobal, BorgConfiguration
-import shared_fort
-import hashlib
+import os
 import subprocess
-from functools import partial
-import tempfile
 import xml.etree.ElementTree as ET
-import pytest
+from functools import partial
 from pathlib import Path
+
+import pytest
+
+from . import shared_fort
+from wfc.dir_watcher.global_static import BorgConfiguration, PyGlobal
+from wfc.dir_watcher import common_util
+
 
 def two_add(a, b, c=6):
     return a + int(b) + c
+
 
 class TestCommonUtil(object):
     def test_split_url(self):
@@ -30,7 +31,6 @@ class TestCommonUtil(object):
         softwares = j['SwitchByOs'][j['OsType']]['Softwares']
         assert isinstance(softwares, list)
 
-        
     def test_os_walk(self):
         pd: Path = PyGlobal.python_dir
         assert pd.name == 'python'

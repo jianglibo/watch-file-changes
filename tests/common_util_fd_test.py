@@ -1,10 +1,9 @@
 import unittest
 import common_util
-from global_static import PyGlobal
 import tempfile
-import os
 import shutil
 from pathlib import Path
+
 
 class Test_TestCommonUtilWithDiskIO(unittest.TestCase):
     def setUp(self):
@@ -15,7 +14,7 @@ class Test_TestCommonUtilWithDiskIO(unittest.TestCase):
 
     def test_maxbackupnumber(self):
         f: Path = self.dd.joinpath('abc.txt')
-        with  f.open('w') as the_file:
+        with f.open('w') as the_file:
             the_file.write('Hello\n')
 
         n = common_util.get_maxbackupnumber(f)
@@ -32,12 +31,13 @@ class Test_TestCommonUtilWithDiskIO(unittest.TestCase):
             the_file.write('Hello\n')
         n = common_util.get_maxbackupnumber(f)
         self.assertEqual(n, 2)
-    
+
     def test_backupdirectory(self):
         d: Path = self.dd.joinpath("d0")
         d.mkdir(parents=True)
         d1 = common_util.backup_localdirectory(d)
         self.assertEqual(str(d1), str(d) + ".1")
+
 
 if __name__ == '__main__':
     unittest.main()

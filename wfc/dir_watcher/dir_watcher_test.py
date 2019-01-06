@@ -1,21 +1,14 @@
-import common_util
-from global_static import PyGlobal
-import tempfile, os, json, io, shutil, subprocess, re
-import dir_watcher
-from pathlib import Path
-from typing import List, Dict, NamedTuple, Tuple
-from typing_extensions import Final
-import threading, time, logging
-from threading import Lock
-from py._path.local import LocalPath
-
-
 # from .dir_watcher_entry import get_watch_config, WatchConfig, WatchPath, DirWatchDog, load_watch_config
 import threading
-import pytest
-from vedis import Vedis # pylint: disable=E0611
+import time
+from pathlib import Path
+from threading import Lock
 
-from _pytest.logging import LogCaptureFixture
+from py._path.local import LocalPath
+from typing_extensions import Final
+
+import pytest
+from vedis import Vedis  # pylint: disable=E0611
 
 # def get_configfile() -> Path:
 #     return Path(__file__, '..', '..', 'pytest', 'dir_watcher_t.json')
@@ -23,6 +16,7 @@ from _pytest.logging import LogCaptureFixture
 LIST_NAME: Final = 'one-list'
 
 lock_ob: Lock = threading.Lock()
+
 
 @pytest.fixture
 def db(tmpdir: LocalPath):
@@ -32,6 +26,7 @@ def db(tmpdir: LocalPath):
     print("teardown watchdog")
     db.close()
     tmpdir.remove()
+
 
 class TestDirWatcher(object):
     def test_true(self, db: Vedis):
@@ -48,7 +43,7 @@ class TestDirWatcher(object):
                 time.sleep(0.1)
 
         ts = []
-            
+
         t = threading.Thread(target=to_run, args=())
         t.start()
         assert t.is_alive()
@@ -108,7 +103,6 @@ class TestDirWatcher(object):
 #         assert p.read_text() == CONTENT
 #         assert len(list(tmp_path.iterdir())) == 1
 
-        
 #     def test_create_file_1(self, tmpdir):
 #         p = tmpdir.mkdir("sub").join("hello.txt")
 #         p.write("content")
@@ -181,4 +175,3 @@ class TestDirWatcher(object):
 #             assert wd.get_created_number() == 0
 #             assert wd.get_deleted_number() == 0
 #             assert wd.get_modified_number() == 0
-            

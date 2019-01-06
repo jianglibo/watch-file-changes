@@ -11,5 +11,6 @@ V_MOVED_SET_TABLE: Final = "moved"
 V_DELETED_SET_TABLE: Final = "deleted"
 V_CREATED_SET_TABLE: Final = "created"
 V_CHANGED_LIST_TABLE: Final = "changed"
+V_STANDARD_LIST_TABLE: Final = "standard"
 
 OUT_CONFIG_FILE: Final = 'OUT_CONFIG_FILE'

@@ -1,28 +1,28 @@
-from flask import (
-    Blueprint, flash, g, redirect, render_template, request, url_for
-)
-from werkzeug.exceptions import abort
-from werkzeug.datastructures import ImmutableMultiDict 
-from flask import current_app, Response, request, Request
-from .constants import V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, V_MODIFIED_HASH_TABLE, V_MODIFIED_REALLY_SET_TABLE, V_MOVED_SET_TABLE, V_CHANGED_LIST_TABLE
-from vedis import Vedis # pylint: disable=E0611
-import os
-from typing import Set, Optional, AnyStr, Iterable, Dict, Tuple, List
-from mypy_extensions import TypedDict
-from logging import Logger
-from .typed_value import get_current_app, get_current_request, get_current_args
 import json
+from logging import Logger
+from typing import Dict, List, Set, Tuple
+
+from flask import (Blueprint, Response, current_app)
+from mypy_extensions import TypedDict
+
+from vedis import Vedis  # pylint: disable=E0611
+
 from . import my_vedis
+from .constants import (V_CHANGED_LIST_TABLE)
+from .typed_value import get_current_args
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
+
 
 class ListOfTupleDict(TypedDict):
     length: int
     values: List[Tuple[str, str]]
 
+
 class ListStrDict(TypedDict):
     length: int
     values: List[str]
+
 
 def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfTupleDict:
     logger: Logger = app.logger
@@ -32,14 +32,16 @@ def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfT
             d = ListOfTupleDict(length=db.hlen(table_name), values=[])
         else:
             hash_obj: Dict[bytes, bytes] = db.hgetall(table_name)
-            hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0].decode(), itm[1].decode()), hash_obj.items()))
+            hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0].decode(), itm[1].decode()),
+                                                        hash_obj.items()))
             d = ListOfTupleDict(length=len(hash_list), values=hash_list)
     except Exception as e:
         logger.error(e, exc_info=True)
         d = ListOfTupleDict(length=0, values=[])
     return d
 
-def get_set_content(app, table_name: str, length_only: bool=False) -> ListStrDict:
+
+def get_set_content(app, table_name: str, length_only: bool = False) -> ListStrDict:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
     try:
@@ -54,7 +56,8 @@ def get_set_content(app, table_name: str, length_only: bool=False) -> ListStrDic
         d = ListStrDict(length=0, values=[])
     return d
 
-def get_list_content(app, table_name: str, length_only: bool=False) -> ListStrDict:
+
+def get_list_content(app, table_name: str, length_only: bool = False) -> ListStrDict:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
     try:
@@ -69,10 +72,12 @@ def get_list_content(app, table_name: str, length_only: bool=False) -> ListStrDi
         d = ListStrDict(length=0, values=[])
     return d
 
+
 @bp.route('/list', methods=['GET'])
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
-    d: ListOfTupleDict = get_list_content(current_app, V_CHANGED_LIST_TABLE, length_only=length_only)
+    d: ListOfTupleDict = get_list_content(
+        current_app, V_CHANGED_LIST_TABLE, length_only=length_only)
     r = Response(json.dumps(d), mimetype="text/plain")
     return r
 
@@ -110,4 +115,3 @@ def list_list():
 #     d: ListOfTupleDict = get_hash_content(current_app, V_MODIFIED_HASH_TABLE, length_only=length_only)
 #     r = Response(json.dumps(d), mimetype="text/plain")
 #     return r
-
