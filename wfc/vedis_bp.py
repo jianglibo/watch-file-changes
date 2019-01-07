@@ -2,13 +2,13 @@ import json
 from logging import Logger
 from typing import Dict, List, Set, Tuple
 
-from flask import (Blueprint, Response, current_app)
+from flask import Blueprint, Response, current_app
 from mypy_extensions import TypedDict
 
 from vedis import Vedis  # pylint: disable=E0611
 
 from . import my_vedis
-from .constants import (V_CHANGED_LIST_TABLE)
+from .constants import V_CHANGED_LIST_TABLE
 from .typed_value import get_current_args
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
@@ -31,8 +31,8 @@ def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfT
         if length_only:
             d = ListOfTupleDict(length=db.hlen(table_name), values=[])
         else:
-            hash_obj: Dict[bytes, bytes] = db.hgetall(table_name)
-            hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0].decode(), itm[1].decode()),
+            hash_obj: Dict[str, str] = db.hgetall(table_name)
+            hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0], itm[1]),
                                                         hash_obj.items()))
             d = ListOfTupleDict(length=len(hash_list), values=hash_list)
     except Exception as e:
@@ -48,8 +48,8 @@ def get_set_content(app, table_name: str, length_only: bool = False) -> ListStrD
         if length_only:
             d = ListStrDict(length=db.scard(table_name), values=[])
         else:
-            set_obj: Set[bytes] = db.smembers(table_name)
-            set_iter: List[str] = list(map(lambda bts: bts.decode(), set_obj))
+            set_obj: Set[str] = db.smembers(table_name)
+            set_iter: List[str] = list(map(lambda bts: bts, set_obj))
             d = ListStrDict(length=len(set_iter), values=set_iter)
     except Exception as e:
         logger.error(e, exc_info=True)

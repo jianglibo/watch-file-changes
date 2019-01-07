@@ -1,20 +1,21 @@
+import json
 import time
 from os import stat_result
-from typing import Dict, List, Tuple
-
-import pytest
-from flask import Response
-from py._path.local import LocalPath
-from vedis import Vedis  # pylint: disable=E0611
-
-import json
-import wfc
 from pathlib import Path
 from queue import Queue
+from typing import Dict, List, Tuple
+
+from flask import Response
+from py._path.local import LocalPath
+
+import pytest
+import wfc
+from vedis import Vedis
 from wfc.constants import V_CHANGED_LIST_TABLE
-from wfc.dir_watcher import dir_watcher_entry
+from wfc.dir_watcher.dir_watcher_dog import DirWatchDog
 from wfc.dir_watcher.watch_values import FileChange, decode_file_change
-from wfc.my_vedis import DbThread, BatchProcessThread
+from wfc.my_vedis import V_STANDARD_HASH_TABLE, BatchProcessThread, DbThread
+
 # from wfc.dir_watcher.dir_init_thread import DirInitThread
 
 
@@ -65,11 +66,10 @@ def dir_watcher(request, db_thread: DbThread, tmpdir: LocalPath):
     watch_paths: List[Dict] = request.param['watch_paths']
     td: LocalPath = tmpdir
     watch_paths[0]['path'] = td.join('dd').mkdir()
-    dwd = dir_watcher_entry.start_watchdog(watch_paths, db_thread.file_change_queue)
+    dir_watch_dog = DirWatchDog(watch_paths, db_thread.file_change_queue)
     bpt: BatchProcessThread = BatchProcessThread(db_thread.batch_file_change_queue)
-    # dir_init_thread = DirInitThread(db_thread.file_change_queue, )
-    yield (db_thread, dwd, request.param['tid'], watch_paths, bpt)
-    dwd.stop_watch()
+    yield (db_thread, dir_watch_dog, request.param['tid'], watch_paths, bpt)
+    dir_watch_dog.stop_watch()
     bpt.batch_file_change_queue.put(None)
 
 
@@ -78,7 +78,7 @@ def test_open_vedis(vdb: Vedis):
         h: Dict = vdb.Hash('a-hash')
         h['abc'] = 55
         vdb.commit()
-    v: bytes = vdb.hget('a-hash', 'abc')
+    v: str = vdb.hget('a-hash', 'abc')
     assert int(v) == 55
 
 
@@ -92,24 +92,30 @@ def test_queue_db(db_thread: DbThread):
     assert db_thread.db.llen(V_CHANGED_LIST_TABLE) == 10
 
 
-def test_watch_db(dir_watcher: Tuple[DbThread, dir_watcher_entry.DirWatchDog, int, List[Dict], BatchProcessThread]):
+def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):
     db_thread: DbThread = dir_watcher[0]
     db_thread.start()
-    # dir_watch_dog: dir_watcher_entry.DirWatchDog = dir_watcher[1]
-    # tid: int = dir_watcher[2]
+
     one_path: Dict = dir_watcher[3][0]
     test_path = Path(one_path['path'])
-    btp: BatchProcessThread = dir_watcher[4]
-    btp.start()
-    t: Path = test_path.joinpath('he.txt')
-    t.write_text("abc")
-    assert test_path.exists()
-    assert t.exists()
+
+    test_path.joinpath('he0.txt').write_text("abc")
+    test_path.joinpath('he1.txt').write_text("abc")
+    test_path.joinpath('he2.txt').write_text("abc")
+
+    dir_watch_dog = dir_watcher[1]
+    dir_watch_dog.watch(initialize=True)
+
+    d = db_thread.db.Hash(V_STANDARD_HASH_TABLE)
+    assert len(d) == 3
+    batch_process_thread = dir_watcher[4]
+    batch_process_thread.start()
+    test_path.joinpath('he.txt').write_text("abc")
     time.sleep(1)
-    changed_list = db_thread.db.List(V_CHANGED_LIST_TABLE)
+    changed_list = list(db_thread.db.List(V_CHANGED_LIST_TABLE))
     for item in changed_list:
         fc: FileChange = decode_file_change(item)
-        print(fc)
+        assert fc.size == 3
     assert len(changed_list) == 2  # create and change event.
 
     db_thread.file_change_queue.put(1)
@@ -120,7 +126,7 @@ def test_watch_db(dir_watcher: Tuple[DbThread, dir_watcher_entry.DirWatchDog, in
     db_thread.file_change_queue.put(1)
     time.sleep(0.5)
     changed_list = db_thread.db.List(V_CHANGED_LIST_TABLE)
-    assert len(changed_list) == 0  # create and change event.
+    assert not changed_list  # create and change event.
 
 
 def test_file_change_equal(db_file_path: Path):

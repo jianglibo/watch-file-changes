@@ -1,16 +1,17 @@
-from flask import Flask
-from flask import Config
-from flask import Response
-from . import my_vedis
-from .dir_watcher import dir_watcher_entry
-import os, sys
-from .constants import OUT_CONFIG_FILE, VEDIS_FILE, WATCH_PATHES
-from . import vedis_bp
-from typing import Dict, List
+import os
+import sys
+from typing import List
+
+from . import my_vedis, vedis_bp
+from .constants import OUT_CONFIG_FILE, WATCH_PATHES
+from .dir_watcher.dir_watcher_dog import DirWatchDog
+from flask import Flask, Response
 from logging.config import dictConfig
+
 import logging
-from . import my_signal
 import threading
+from queue import Queue
+
 
 dictConfig({
     'version': 1,
@@ -28,6 +29,7 @@ dictConfig({
     }
 })
 
+
 def find_data_file(filename):
     if getattr(sys, 'frozen', False):
         # The application is frozen
@@ -38,34 +40,42 @@ def find_data_file(filename):
         datadir = os.path.dirname(__file__)
     return os.path.join(datadir, filename)
 
+
 def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True, test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     try:
-        app.config.from_object('config.default') # a string or an actual config object.
+        # a string or an actual config object.
+        app.config.from_object('config.default')
         # app.config.from_pyfile('config.py') # half function fo from_object.
         # app.config.from_envvar('abc') # app.config.from_pyfile(os.environ['abc'])
-        app.config.from_object('config.%s' % app.config['ENV']) # a string or an actual config object.
+        # a string or an actual config object.
+        app.config.from_object('config.%s' % app.config['ENV'])
     except Exception as e:
         logging.error(e, exc_info=True)
 
     if OUT_CONFIG_FILE in os.environ:
-        app.config.from_envvar(OUT_CONFIG_FILE) # app.config.from_pyfile(os.environ['abc'])
+        # app.config.from_pyfile(os.environ['abc'])
+        app.config.from_envvar(OUT_CONFIG_FILE)
 
     @app.route('/')
-    def hello_world(): # pylint: disable=W0612
-        info_pairs: List[str] = ["%s=%s" % (pa[0], pa[1]) for pa in app.config.items()]
+    def hello_world():  # pylint: disable=W0612
+        info_pairs: List[str] = ["%s=%s" %
+                                 (pa[0], pa[1]) for pa in app.config.items()]
         info_pairs.append('thread_identity=%s' % threading.get_ident())
         info_pairs.append('main_thread_identity=%s' % threading.main_thread())
         r = Response("\n".join(info_pairs), mimetype="text/plain")
         return r
 
-    if init_vedis: my_vedis.init_app(app)
+    data_queue = Queue()
+
+    if init_vedis:
+        my_vedis.init_app(app, data_queue)
     if init_watch_dog:
-        dwd = dir_watcher_entry.start_watchdog(app.config[WATCH_PATHES], my_vedis.data_queue)
-        dir_watcher_entry.dir_watch_dog = dwd
-    if register_vedis: app.register_blueprint(vedis_bp.bp)
+        DirWatchDog(app.config[WATCH_PATHES], data_queue).watch(initialize=True)
+    if register_vedis:
+        app.register_blueprint(vedis_bp.bp)
     return app
-        
+
 
 # app = Flask(__name__, instance_relative_config=True)
 

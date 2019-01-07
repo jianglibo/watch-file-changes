@@ -2,8 +2,9 @@
 from pathlib import Path
 
 import pytest
-
-from wfc.dir_watcher.watch_values import WatchPath
+from vedis import Vedis
+from wfc.dir_watcher.watch_values import (FileChange, WatchPath,
+                                          decode_file_change)
 
 from .shared_fort import tmppath  # NOQA
 
@@ -31,4 +32,50 @@ class TestWatchValues(object):
         assert wp.regexes == []
         assert wp.ignore_regexes == ['.*']
         assert wp._regexes == []
-        assert type(wp._ignore_regexes[0]) != str
+        assert not isinstance(wp._ignore_regexes[0], str)
+
+    def test_vedis_value(self):
+        db: Vedis = Vedis(':mem:')
+        list_name = 'a-list'
+        db.lpush(list_name, b'abc\x00bbb')
+        values = list(db.List(list_name))
+        assert values[0] != b'abc\x00bbb'
+        assert values[0] == b'abc'  # truncated
+
+    def test_file_change_to_str(self):
+        fc = FileChange('abc', 1, 66.66, 55)
+        assert str(fc) == 'abc|1|66.66|55|'
+        fc = FileChange('abc', 1, 66.66, 55, None)
+        assert str(fc) == 'abc|1|66.66|55|'
+        fc = FileChange('abc', 1, 66.66, 55, '')
+        assert str(fc) == 'abc|1|66.66|55|'
+        fc = FileChange('abc', 1, 66.66, 55, 'xx')
+        assert str(fc) == 'abc|1|66.66|55|xx'
+
+        fc = decode_file_change('abc|1|66.66|55|xx')
+        assert fc.fn == 'abc'
+        assert fc.ct == 1
+        assert fc.mt == 66.66
+        assert fc.size == 55
+        assert fc.cv == 'xx'
+
+        fc = decode_file_change(b'abc|1|66.66|55|xx')
+        assert fc.fn == 'abc'
+        assert fc.ct == 1
+        assert fc.mt == 66.66
+        assert fc.size == 55
+        assert fc.cv == 'xx'
+
+        fc = decode_file_change('abc|1|66.66|55|')
+        assert fc.fn == 'abc'
+        assert fc.ct == 1
+        assert fc.mt == 66.66
+        assert fc.size == 55
+        assert fc.cv == ''
+
+        fc = decode_file_change(b'abc|1|66.66|55|')
+        assert fc.fn == 'abc'
+        assert fc.ct == 1
+        assert fc.mt == 66.66
+        assert fc.size == 55
+        assert fc.cv == ''

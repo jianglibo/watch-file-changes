@@ -1,11 +1,8 @@
-import json
 import logging
 import re
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-
-from mypy_extensions import TypedDict
 
 
 class ErrorNames(Enum):
@@ -16,18 +13,20 @@ class ErrorNames(Enum):
 class WatchPath():
     def __init__(self,
                  path: Path,
-                 regexes: List[str] = [],
-                 ignore_regexes: List[str] = [],
+                 regexes: List[str] = None,
+                 ignore_regexes: List[str] = None,
                  ignore_directories: bool = True,
                  case_sensitive: bool = True,
                  recursive: bool = True):
         self.path = path
         self.recursive = recursive
-        self.regexes = regexes
+        self.regexes = regexes if regexes else []
         self.case_sensitive = case_sensitive
         self.ignore_directories = ignore_directories
-        self.ignore_regexes = ignore_regexes
+        self.ignore_regexes = ignore_regexes if ignore_regexes else []
         self._has_regexes = len(self.regexes) > 0
+        self._regexes: List = []
+        self._ignore_regexes: List = []
 
     def compile_re(self):
         if self.regexes is None:
@@ -42,6 +41,7 @@ class WatchPath():
             self._regexes = [re.compile(r, re.I) for r in self.regexes]
             self._ignore_regexes = [re.compile(
                 r, re.I) for r in self.ignore_regexes]
+        return self
 
     def ignored(self, strpath: str, is_dir=False):
         if is_dir and self.ignore_directories:
@@ -66,12 +66,40 @@ class ChangeType():
     deleted = 4
 
 
-class FileChange(TypedDict):
-    fn: bytes
+class FileChange():
+    """
+      we get file name from file system event handler which is a string. But vedis value is always bytes.
+      Because vedis list will truncate 00 byte, so we use str instead.
+    """
+    fn: str
     ct: int
-    cv: Optional[bytes]
+    cv: Optional[str]
     mt: float
     size: int
+
+    def __init__(self, fn: str, ct: int, mt: float, size: int, cv: Optional[str] = None):
+        self.fn = fn
+        self.ct = ct
+        self.mt = mt
+        self.size = size
+        self.cv = cv
+
+    def __str__(self) -> str:
+        return '|'.join([
+            self.fn,
+            str(self.ct),
+            str(self.mt),
+            str(self.size),
+            self.cv if self.cv else ''
+        ])
+
+    # def to_bytes(self) -> bytes:
+    #     return b'%b\x00%b\x00%b\x00%b\x00%b' % (
+    #         self.fn.encode(),
+    #         str(self.ct).encode(),
+    #         str(self.mt).encode(),
+    #         str(self.size).encode(),
+    #         self.cv.encode() if self.cv else b'')
 
 
 class WatchConfig():
@@ -79,7 +107,7 @@ class WatchConfig():
         for wp in watch_pathes:
             wp['path'] = Path(wp['path']).expanduser()
         self.watch_paths: List[WatchPath] = [
-            WatchPath(**p) for p in watch_pathes]
+            WatchPath(**p).compile_re() for p in watch_pathes]
         logging.info('with %s to watch.', self.watch_paths)
 
     def get_un_exists_paths(self) -> List[WatchPath]:
@@ -87,18 +115,35 @@ class WatchConfig():
 
 
 def encode_file_change(fc: Union[FileChange, Path]) -> str:
+    file_change: FileChange
     if isinstance(fc, Path):
         stat = fc.stat()
-        fcp: FileChange = FileChange(fn=bytes(fc),
-                                     ct=ChangeType.created,
-                                     cv=None,
-                                     mt=stat.st_mtime,
-                                     size=stat.st_size)
-
-        return json.dumps(fcp)
+        file_change = FileChange(fn=str(fc),
+                                 ct=ChangeType.created,
+                                 cv=None,
+                                 mt=stat.st_mtime,
+                                 size=stat.st_size)
     else:
-        return json.dumps(fc)
+        file_change = fc
+    return str(file_change)
 
 
-def decode_file_change(json_str: str) -> FileChange:
-    return json.loads(json_str)
+def decode_file_change(bytes_repr: Union[str, bytes]) -> FileChange:
+    """We actually got bytes when from vedis.
+    """
+    fields: Union[List[str], List[bytes]]
+    fn: str
+    if isinstance(bytes_repr, bytes):
+        fields = bytes_repr.split(b'|')
+        fn = fields[0].decode()
+        cv = fields[4].decode()
+    else:
+        fields = bytes_repr.split('|')
+        fn = fields[0]
+        cv = fields[4]
+
+    return FileChange(fn=fn,
+                      ct=int(fields[1]),
+                      mt=float(fields[2]),
+                      size=int(fields[3]),
+                      cv=cv)

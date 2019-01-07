@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from os import stat_result
 from queue import Queue
 from typing import Optional
 
@@ -30,6 +29,7 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
         """
         if self.wc.ignored(event.src_path, event.is_directory):
             return
+        # assert isinstance(event.src_path, bytes)
         super().dispatch(event)
 
     def stat_tostring(self, a_path):
@@ -40,7 +40,7 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
             logging.error(e, exc_info=True)
             return None
 
-    def get_stat(self, p: str) -> Optional[stat_result]:
+    def get_stat(self, p: str) -> Optional[os.stat_result]:
         try:
             return os.stat(p)
         except Exception as e:
@@ -50,7 +50,7 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
     def on_moved(self, event):
         what = 'directory' if event.is_directory else 'file'
         try:
-            stat: stat_result = self.get_stat(event.dest_path)
+            stat: os.stat_result = self.get_stat(event.dest_path)
             cf: FileChange = FileChange(fn=event.src_path,
                                         ct=ChangeType.moved,
                                         cv=event.dest_path,
@@ -67,7 +67,7 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
     def on_created(self, event):
         what = 'directory' if event.is_directory else 'file'
         try:
-            stat: stat_result = self.get_stat(event.src_path)
+            stat = self.get_stat(event.src_path)
             cf: FileChange = FileChange(fn=event.src_path,
                                         ct=ChangeType.created,
                                         cv=None, mt=stat.st_mtime,
@@ -98,7 +98,7 @@ class LoggingSelectiveEventHandler(FileSystemEventHandler):
         src_path = event.src_path
         what = 'directory' if event.is_directory else 'file'
         try:
-            stat: stat_result = self.get_stat(event.src_path)
+            stat = self.get_stat(event.src_path)
             cf: FileChange = FileChange(fn=src_path,
                                         ct=ChangeType.modified,
                                         cv=None,

@@ -1,32 +1,24 @@
 import logging
 import threading
 import time
+import traceback
 from pathlib import Path
 from queue import Queue
-from threading import Event, Lock
-from typing import Dict, List
+from typing import List, Tuple
 
 import schedule
 from flask import current_app, g
 
 from vedis import Vedis  # pylint: disable=E0611
 
-from .constants import V_CHANGED_LIST_TABLE, VEDIS_FILE, V_STANDARD_LIST_TABLE
+from .constants import V_CHANGED_LIST_TABLE, V_STANDARD_HASH_TABLE, VEDIS_FILE
 from .dir_watcher.watch_values import FileChange, encode_file_change
 
 controll_queue: Queue = Queue()
 
-lock: Lock = Lock()
-cease_db_run: Event = threading.Event()
-cease_schedule_run: Event = threading.Event()
-
-
-def init_app(app):
-    app.teardown_appcontext(close_db)
-    file_change_queue: Queue = Queue()
-    batch_file_change_queue: Queue = Queue()
-    DbThread(app.config[VEDIS_FILE], file_change_queue, batch_file_change_queue).start()
-    ScheduleThread(cease_schedule_run).start()
+lock = threading.Lock()
+cease_db_run = threading.Event()
+cease_schedule_run = threading.Event()
 
 
 class DbThread(threading.Thread):
@@ -45,7 +37,8 @@ class DbThread(threading.Thread):
                 break
             try:
                 with self.db.transaction():
-                    self.db.lpush(V_CHANGED_LIST_TABLE, encode_file_change(item))
+                    bb = encode_file_change(item)
+                    self.db.lpush(V_CHANGED_LIST_TABLE, bb)
                     self.db.commit()
                 break
             except Exception as e:
@@ -55,13 +48,13 @@ class DbThread(threading.Thread):
     def insert_standard(self, item: Path):
         try:
             with self.db.transaction():
-                self.db.lpush(V_STANDARD_LIST_TABLE, encode_file_change(item))
+                self.db.hset(V_STANDARD_HASH_TABLE, str(item), encode_file_change(item))
                 self.db.commit()
         except Exception as e:
             logging.error(e, exc_info=True)
 
     def process_file_change(self, number: int):
-        items: List[bytes] = []
+        items: List[str] = []
         with self.db.transaction():
             item = self.db.lpop(V_CHANGED_LIST_TABLE)
             idx: int = 0
@@ -81,14 +74,15 @@ class DbThread(threading.Thread):
                 if item is None:
                     self.db.close()
                     break
-                elif isinstance(item, Dict):
+                elif isinstance(item, FileChange):
                     self._insert_to_db(item)
                 elif isinstance(item, int):
                     self.process_file_change(item)
                 elif isinstance(item, Path):
                     self.insert_standard(item)
                 else:
-                    logging.error("unknonw data receive in dbthread.")
+                    logging.error("unknown data: %s receive in db_thread.", type(item))
+                    traceback.print_stack()
                 self.file_change_queue.task_done()
             except Exception as e:
                 logging.error(e, exc_info=True)
@@ -102,7 +96,7 @@ class ScheduleThread(threading.Thread):
     def job(self):
         print("I'm working...%s" % time.asctime())
 
-    def __init__(self, cease_event: Event,  **kwargs):
+    def __init__(self, cease_event: threading.Event, **kwargs):
         super().__init__(**kwargs)
         self.cease_event = cease_event
 
@@ -131,6 +125,15 @@ class BatchProcessThread(threading.Thread):
             finally:
                 pass
             time.sleep(1)
+
+
+def init_app(app, data_queue: Queue) -> Tuple[DbThread]:
+    app.teardown_appcontext(close_db)
+    batch_file_change_queue: Queue = Queue()
+    db_thread = DbThread(app.config[VEDIS_FILE], data_queue, batch_file_change_queue)
+    db_thread.start()
+    ScheduleThread(cease_schedule_run).start()
+    return (db_thread,)
 
 
 def get_db():
