@@ -3,3 +3,6 @@
     "--disable=E0611,C0111,C0321,C0103",
     "--max-line-length=120"
 ]
+		"python.analysis.disabled": [
+			"use-before-def"
+		],

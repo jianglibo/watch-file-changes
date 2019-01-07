@@ -73,7 +73,7 @@ def test_namedtuple_inheritance():
     dic = Dic(1, 's')
     assert dic.a == 1
     assert dic.b == 's'
-    assert type(dic) == Dic
+    assert isinstance(dic, Dic)
     assert not isinstance(dic, NamedTuple)
     assert isinstance(dic, tuple)
 

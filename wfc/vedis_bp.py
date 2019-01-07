@@ -35,7 +35,7 @@ def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfT
             hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0], itm[1]),
                                                         hash_obj.items()))
             d = ListOfTupleDict(length=len(hash_list), values=hash_list)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
         d = ListOfTupleDict(length=0, values=[])
     return d
@@ -51,7 +51,7 @@ def get_set_content(app, table_name: str, length_only: bool = False) -> ListStrD
             set_obj: Set[str] = db.smembers(table_name)
             set_iter: List[str] = list(map(lambda bts: bts, set_obj))
             d = ListStrDict(length=len(set_iter), values=set_iter)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
         d = ListStrDict(length=0, values=[])
     return d
@@ -67,7 +67,7 @@ def get_list_content(app, table_name: str, length_only: bool = False) -> ListStr
             set_obj: List[bytes] = db.List(table_name)
             set_iter: List[str] = list(map(lambda bts: bts.decode(), set_obj))
             d = ListStrDict(length=len(set_iter), values=set_iter)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
         d = ListStrDict(length=0, values=[])
     return d

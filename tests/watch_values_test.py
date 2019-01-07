@@ -2,11 +2,12 @@
 from pathlib import Path
 
 import pytest
+
 from vedis import Vedis
 from wfc.dir_watcher.watch_values import (FileChange, WatchPath,
                                           decode_file_change)
 
-from .shared_fort import tmppath  # NOQA
+from .shared_fort import tmppath  # NOQA pylint: disable=W0611
 
 
 class TestWatchValues(object):
@@ -17,7 +18,7 @@ class TestWatchValues(object):
         with pytest.raises(TypeError, match='missing 4 required') as te:
             WatchPath("", regexes=[], ignore_regexes=[])
 
-    def test_property(self, tmppath: Path):  # NOQA
+    def test_property(self, tmppath: Path):  # NOQA pylint: disable=W0621
         tmppath.joinpath('a.txt').write_text('abc')
         tmppath.joinpath('b.txt').write_text('abc')
         wp: WatchPath = WatchPath(regexes=[],
@@ -31,8 +32,8 @@ class TestWatchValues(object):
         wp.compile_re()
         assert wp.regexes == []
         assert wp.ignore_regexes == ['.*']
-        assert wp._regexes == []
-        assert not isinstance(wp._ignore_regexes[0], str)
+        assert wp._regexes == []  # pylint: disable=W0212
+        assert not isinstance(wp._ignore_regexes[0], str)  # pylint: disable=W0212
 
     def test_vedis_value(self):
         db: Vedis = Vedis(':mem:')

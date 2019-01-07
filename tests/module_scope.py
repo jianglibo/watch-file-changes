@@ -11,7 +11,7 @@ q_to_thread: Queue = Queue()
 
 
 def set_i(j: int):
-    global i
+    global i  # pylint: disable=W0603
     i = j
 
 

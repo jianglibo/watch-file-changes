@@ -41,7 +41,7 @@ class DbThread(threading.Thread):
                     self.db.lpush(V_CHANGED_LIST_TABLE, bb)
                     self.db.commit()
                 break
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 logging.error(e, exc_info=True)
                 time.sleep(0.2)
 
@@ -50,7 +50,7 @@ class DbThread(threading.Thread):
             with self.db.transaction():
                 self.db.hset(V_STANDARD_HASH_TABLE, str(item), encode_file_change(item))
                 self.db.commit()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
 
     def process_file_change(self, number: int):
@@ -84,7 +84,7 @@ class DbThread(threading.Thread):
                     logging.error("unknown data: %s receive in db_thread.", type(item))
                     traceback.print_stack()
                 self.file_change_queue.task_done()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 logging.error(e, exc_info=True)
             finally:
                 pass
@@ -120,7 +120,7 @@ class BatchProcessThread(threading.Thread):
                     break
                 assert isinstance(item, list)
                 self.batch_file_change_queue.task_done()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0703
                 logging.error(e, exc_info=True)
             finally:
                 pass
@@ -142,7 +142,7 @@ def get_db():
     return g.db
 
 
-def close_db(e=None):
+def close_db():
     db = g.pop('db', None)
     if db is not None:
         db.close()

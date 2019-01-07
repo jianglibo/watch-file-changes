@@ -1,6 +1,7 @@
-from mypy_extensions import TypedDict
-from typing import List, Tuple, NamedTuple
+from typing import List, NamedTuple, Tuple
+
 import pytest
+from mypy_extensions import TypedDict
 
 
 class Aclass():

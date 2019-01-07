@@ -1,6 +1,8 @@
-from . import module_scope
 from py._path.local import LocalPath
+
 from vedis import Vedis  # pylint: disable=E0611
+
+from . import module_scope
 
 
 def test_module():
