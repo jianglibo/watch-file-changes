@@ -5,4 +5,12 @@
 ]
 		"python.analysis.disabled": [
 			"use-before-def"
-		],
+		]
+
+File -> Preferences -> User Snippets -> Python:
+
+"Pylint ignore": {
+	"prefix": "  #",
+	"body": "# pylint: disable=${1:W}",
+	"description": "ignore some pylint warning."
+}
