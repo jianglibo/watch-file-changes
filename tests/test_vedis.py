@@ -12,10 +12,10 @@ from py._path.local import LocalPath
 import pytest
 import wfc
 from vedis import Vedis
-from wfc.constants import V_MODIFIED_SET_TABLE
+from wfc.constants import V_MODIFIED_SET_TABLE, V_CREATED_SET_TABLE, V_STANDARD_HASH_TABLE
 from wfc.dir_watcher.dir_watcher_dog import DirWatchDog
 from wfc.dir_watcher.watch_values import FileChange, decode_file_change
-from wfc.my_vedis import V_STANDARD_HASH_TABLE, BatchProcessThread, DbThread
+from wfc.my_vedis import BatchProcessThread, DbThread
 
 
 @pytest.fixture
@@ -113,7 +113,6 @@ def test_move_from_out_side(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[
 
 
 
-
 def test_write_file_multiple(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
     db_thread_1: DbThread = dir_watcher[0]
     db_thread_1.start()
@@ -147,12 +146,20 @@ def test_counter(vdb: Vedis):  # pylint: disable=W0621
 
 def test_hash_get(vdb: Vedis):  # pylint: disable=W0621
     s = vdb.hget("a-hash-table", 'abc')
-    assert not s
+    assert s is None
     b = vdb.hexists('a-hash-table', 'abc')
     assert not b
 
+
     n = vdb.hdel('a-hash-table', 'abc')
     assert n == 0
+
+def test_db_key(vdb: Vedis):  # pylint: disable=W0621
+    with pytest.raises(KeyError):
+        vdb.delete('not-exist-key')
+
+def test_db_set(vdb: Vedis):  # pylint: disable=W0621
+    vdb.srem('a-set', 'k')
 
 def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
     db_thread_1: DbThread = dir_watcher[0]
@@ -172,23 +179,25 @@ def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], Bat
     assert len(d) == 3
     batch_process_thread = dir_watcher[4]
     batch_process_thread.start()
-    test_path.joinpath('he.txt').write_text("abc")
+    test_file = test_path.joinpath('he.txt')
+    test_file.write_text("abc")
     time.sleep(1)
-    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
+    changed_list = list(db_thread_1.db.Set(V_MODIFIED_SET_TABLE))
     for item in changed_list:
         fc: FileChange = decode_file_change(item)
         assert fc.size == 3
-    assert len(changed_list) == 2  # create and change event.
+    assert len(changed_list) == 1
 
-    db_thread_1.file_change_queue.put(1)
-    time.sleep(0.5)
-    changed_list = db_thread_1.db.List(V_MODIFIED_SET_TABLE)
-    assert len(changed_list) == 1  # create and change event.
+    assert db_thread_1.db.hlen(V_STANDARD_HASH_TABLE) == 4
+    assert db_thread_1.db.scard(V_CREATED_SET_TABLE) == 1
+    assert db_thread_1.db.scard(V_MODIFIED_SET_TABLE) == 1
 
-    db_thread_1.file_change_queue.put(1)
-    time.sleep(0.5)
-    changed_list = db_thread_1.db.List(V_MODIFIED_SET_TABLE)
-    assert not changed_list  # create and change event.
+    test_file.unlink()
+    time.sleep(1)
+    assert db_thread_1.db.hlen(V_STANDARD_HASH_TABLE) == 3
+    assert db_thread_1.db.scard(V_CREATED_SET_TABLE) == 0
+    assert db_thread_1.db.scard(V_MODIFIED_SET_TABLE) == 1
+
 
 
 def test_file_change_equal(db_file_path: Path):  # pylint: disable=W0621

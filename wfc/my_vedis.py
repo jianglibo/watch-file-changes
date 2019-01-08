@@ -4,7 +4,7 @@ import time
 import traceback
 from pathlib import Path
 from queue import Queue
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import schedule
 from flask import current_app, g
@@ -13,7 +13,7 @@ from vedis import Vedis
 from wfc.dir_watcher.watch_values import ChangeType
 
 from .constants import V_STANDARD_HASH_TABLE, VEDIS_FILE, V_CREATED_SET_TABLE, V_MODIFIED_SET_TABLE, V_DELETED_SET_TABLE
-from .dir_watcher.watch_values import FileChange, encode_file_change
+from .dir_watcher.watch_values import FileChange, encode_file_change, decode_file_change
 
 controll_queue: Queue = Queue()
 
@@ -32,18 +32,48 @@ class DbThread(threading.Thread):
     def _insert_to_db(self, item: FileChange):
         try:
             with self.db.transaction():
+                delete_count: Optional[str] = None
                 bb = encode_file_change(item)
                 if item.ct == ChangeType.created:
-                    self.db.sadd(V_CREATED_SET_TABLE, bb)
-                elif item.ct == ChangeType.modified:
-                    saved_item = self.db.hget(V_STANDARD_HASH_TABLE, item.fn)
+                    self.db.sadd(V_CREATED_SET_TABLE, item.fn)
+                    self.db.hset(V_STANDARD_HASH_TABLE, item.fn, bb)
                     self.db.sadd(V_MODIFIED_SET_TABLE, bb)
-                    self.db.incr(item.fn)
+                elif item.ct == ChangeType.modified:
+                    saved_item_str = self.db.hget(V_STANDARD_HASH_TABLE, item.fn)
+                    no_saved_or_changed = False
+                    if saved_item_str is None:
+                        no_saved_or_changed = True
+                    else:
+                        saved_item = decode_file_change(saved_item_str)
+                        if saved_item != item:
+                            no_saved_or_changed = True
+                    if no_saved_or_changed:
+                        self.db.hset(V_STANDARD_HASH_TABLE, item.fn, bb)
+                        self.db.sadd(V_MODIFIED_SET_TABLE, bb)
+                        self.db.incr(item.fn)
+                    else:
+                        logging.debug("file wasn't actually changed, %s", item.fn)
                 elif item.ct == ChangeType.deleted:
                     self.db.sadd(V_DELETED_SET_TABLE, bb)
+                    self.db.hdel(V_STANDARD_HASH_TABLE, item.fn)
+                    self.db.srem(V_CREATED_SET_TABLE, item.fn)
+                    delete_count = item.fn
                 else:  # moved
                     self.db.sadd(V_DELETED_SET_TABLE, bb)
-                    self.db.sadd(V_CREATED_SET_TABLE, bb)
+                    if not item.cv:
+                        logging.error("move event's cv value is None. %s", item.fn)
+                    else:
+                        delete_count = item.fn
+                        self.db.sadd(V_CREATED_SET_TABLE, item.cv)
+                        item.fn = item.cv
+                        item.cv = None
+                        new_bb = encode_file_change(item)
+                        self.db.hset(V_STANDARD_HASH_TABLE, item.fn, new_bb)
+                if delete_count:
+                    try:
+                        self.db.delete(delete_count)
+                    except KeyError as ke:
+                        logging.error(ke, exc_info=True)
                 self.db.commit()
         except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
@@ -145,7 +175,9 @@ def get_db():
     return g.db
 
 
-def close_db():
+def close_db(e=None):
+    if e:
+        logging.error(e, exc_info=True)
     db = g.pop('db', None)
     if db is not None:
         db.close()

@@ -76,7 +76,7 @@ def get_list_content(app, table_name: str, length_only: bool = False) -> ListStr
 @bp.route('/list', methods=['GET'])
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
-    d: ListOfTupleDict = get_list_content(
+    d: ListOfTupleDict = get_set_content(
         current_app, V_MODIFIED_SET_TABLE, length_only=length_only)
     r = Response(json.dumps(d), mimetype="text/plain")
     return r
