@@ -1,8 +1,10 @@
+import time
+from typing import Dict, List, Optional, Union
+
 import logging
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 
 class ErrorNames(Enum):
@@ -76,13 +78,20 @@ class FileChange():
     cv: Optional[str]
     mt: float
     size: int
+    ts: float
 
-    def __init__(self, fn: str, ct: int, mt: float, size: int, cv: Optional[str] = None):
+    def __init__(self, fn: str,
+                 ct: int,
+                 mt: float,
+                 size: int,
+                 ts: Optional[float] = None,
+                 cv: Optional[str] = None):
         self.fn = fn
         self.ct = ct
         self.mt = mt
         self.size = size
         self.cv = cv
+        self.ts = time.time() if ts is None else ts
 
     def __str__(self) -> str:
         return '|'.join([
@@ -90,8 +99,21 @@ class FileChange():
             str(self.ct),
             str(self.mt),
             str(self.size),
+            str(self.ts),
             self.cv if self.cv else ''
         ])
+
+    def __eq__(self, other) -> bool:
+        if self.fn != other.fn:
+            return False
+        if self.mt != other.mt:
+            return False
+        if self.size != other.size:
+            return False
+        return True
+
+    def deep_equal(self, other) -> bool:
+        pass
 
     # def to_bytes(self) -> bytes:
     #     return b'%b\x00%b\x00%b\x00%b\x00%b' % (
@@ -120,7 +142,6 @@ def encode_file_change(fc: Union[FileChange, Path]) -> str:
         stat = fc.stat()
         file_change = FileChange(fn=str(fc),
                                  ct=ChangeType.created,
-                                 cv=None,
                                  mt=stat.st_mtime,
                                  size=stat.st_size)
     else:
@@ -136,14 +157,15 @@ def decode_file_change(bytes_repr: Union[str, bytes]) -> FileChange:
     if isinstance(bytes_repr, bytes):
         fields = bytes_repr.split(b'|')
         fn = fields[0].decode()
-        cv = fields[4].decode()
+        cv = fields[5].decode()
     else:
         fields = bytes_repr.split('|')
         fn = fields[0]
-        cv = fields[4]
+        cv = fields[5]
 
     return FileChange(fn=fn,
                       ct=int(fields[1]),
                       mt=float(fields[2]),
                       size=int(fields[3]),
+                      ts=float(fields[4]),
                       cv=cv)

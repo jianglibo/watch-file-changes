@@ -8,7 +8,7 @@ from mypy_extensions import TypedDict
 from vedis import Vedis  # pylint: disable=E0611
 
 from . import my_vedis
-from .constants import V_CHANGED_LIST_TABLE
+from .constants import V_MODIFIED_SET_TABLE
 from .typed_value import get_current_args
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
@@ -77,7 +77,7 @@ def get_list_content(app, table_name: str, length_only: bool = False) -> ListStr
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
     d: ListOfTupleDict = get_list_content(
-        current_app, V_CHANGED_LIST_TABLE, length_only=length_only)
+        current_app, V_MODIFIED_SET_TABLE, length_only=length_only)
     r = Response(json.dumps(d), mimetype="text/plain")
     return r
 

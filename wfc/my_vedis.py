@@ -9,9 +9,10 @@ from typing import List, Tuple
 import schedule
 from flask import current_app, g
 
-from vedis import Vedis  # pylint: disable=E0611
+from vedis import Vedis
+from wfc.dir_watcher.watch_values import ChangeType
 
-from .constants import V_CHANGED_LIST_TABLE, V_STANDARD_HASH_TABLE, VEDIS_FILE
+from .constants import V_STANDARD_HASH_TABLE, VEDIS_FILE, V_CREATED_SET_TABLE, V_MODIFIED_SET_TABLE, V_DELETED_SET_TABLE
 from .dir_watcher.watch_values import FileChange, encode_file_change
 
 controll_queue: Queue = Queue()
@@ -29,21 +30,23 @@ class DbThread(threading.Thread):
         self.batch_file_change_queue: Queue = batch_file_change_queue
 
     def _insert_to_db(self, item: FileChange):
-        cc: int = 0
-        while True:
-            cc = cc + 1
-            if cc > 6:
-                logging.error('insert item %s failed, after trying 6 times, giving up.', item)
-                break
-            try:
-                with self.db.transaction():
-                    bb = encode_file_change(item)
-                    self.db.lpush(V_CHANGED_LIST_TABLE, bb)
-                    self.db.commit()
-                break
-            except Exception as e:  # pylint: disable=W0703
-                logging.error(e, exc_info=True)
-                time.sleep(0.2)
+        try:
+            with self.db.transaction():
+                bb = encode_file_change(item)
+                if item.ct == ChangeType.created:
+                    self.db.sadd(V_CREATED_SET_TABLE, bb)
+                elif item.ct == ChangeType.modified:
+                    saved_item = self.db.hget(V_STANDARD_HASH_TABLE, item.fn)
+                    self.db.sadd(V_MODIFIED_SET_TABLE, bb)
+                    self.db.incr(item.fn)
+                elif item.ct == ChangeType.deleted:
+                    self.db.sadd(V_DELETED_SET_TABLE, bb)
+                else:  # moved
+                    self.db.sadd(V_DELETED_SET_TABLE, bb)
+                    self.db.sadd(V_CREATED_SET_TABLE, bb)
+                self.db.commit()
+        except Exception as e:  # pylint: disable=W0703
+            logging.error(e, exc_info=True)
 
     def insert_standard(self, item: Path):
         try:
@@ -53,19 +56,19 @@ class DbThread(threading.Thread):
         except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
 
-    def process_file_change(self, number: int):
-        items: List[str] = []
-        with self.db.transaction():
-            item = self.db.lpop(V_CHANGED_LIST_TABLE)
-            idx: int = 0
-            while item is not None:
-                items.append(item)
-                idx += 1
-                if number > 0 and idx >= number:
-                    break
-                item = self.db.lpop(V_CHANGED_LIST_TABLE)
-            self.db.commit()
-        self.batch_file_change_queue.put(items)
+    # def process_file_change(self, number: int):
+    #     items: List[str] = []
+    #     with self.db.transaction():
+    #         item = self.db.lpop(V_CHANGED_LIST_TABLE)
+    #         idx: int = 0
+    #         while item is not None:
+    #             items.append(item)
+    #             idx += 1
+    #             if idx >= number > 0:
+    #                 break
+    #             item = self.db.lpop(V_CHANGED_LIST_TABLE)
+    #         self.db.commit()
+    #     self.batch_file_change_queue.put(items)
 
     def run(self):
         while True:
@@ -76,8 +79,8 @@ class DbThread(threading.Thread):
                     break
                 elif isinstance(item, FileChange):
                     self._insert_to_db(item)
-                elif isinstance(item, int):
-                    self.process_file_change(item)
+                # elif isinstance(item, int):
+                #     self.process_file_change(item)
                 elif isinstance(item, Path):
                     self.insert_standard(item)
                 else:

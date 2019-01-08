@@ -3,6 +3,7 @@ import time
 from os import stat_result
 from pathlib import Path
 from queue import Queue
+import shutil
 from typing import Dict, List, Tuple
 
 from flask import Response
@@ -11,7 +12,7 @@ from py._path.local import LocalPath
 import pytest
 import wfc
 from vedis import Vedis
-from wfc.constants import V_CHANGED_LIST_TABLE
+from wfc.constants import V_MODIFIED_SET_TABLE
 from wfc.dir_watcher.dir_watcher_dog import DirWatchDog
 from wfc.dir_watcher.watch_values import FileChange, decode_file_change
 from wfc.my_vedis import V_STANDARD_HASH_TABLE, BatchProcessThread, DbThread
@@ -87,8 +88,71 @@ def test_queue_db(db_thread: DbThread):  # pylint: disable=W0621
         data_queue.put('abc%s' % i)
     data_queue.join()
     data_queue.put(None)
-    assert db_thread.db.llen(V_CHANGED_LIST_TABLE) == 10
+    assert db_thread.db.llen(V_MODIFIED_SET_TABLE) == 10
 
+
+def test_move_from_out_side(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
+    db_thread_1: DbThread = dir_watcher[0]
+    db_thread_1.start()
+
+    one_path: Dict = dir_watcher[3][0]
+    test_path = Path(one_path['path'])
+    dir_watch_dog = dir_watcher[1]
+    dir_watch_dog.watch(initialize=True)
+
+    src_path: Path = Path("e:/a_file.txt")
+    src_path.write_text("hello")
+
+    shutil.move(src=str(src_path), dst=str(test_path))
+
+    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
+    assert len(changed_list) >= 1  # create and change event.
+    for cv in changed_list:
+        fc: FileChange = decode_file_change(cv)
+        assert fc.ct == 1 or fc.ct == 2
+
+
+
+
+def test_write_file_multiple(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
+    db_thread_1: DbThread = dir_watcher[0]
+    db_thread_1.start()
+
+    one_path: Dict = dir_watcher[3][0]
+    test_path = Path(one_path['path'])
+    dir_watch_dog = dir_watcher[1]
+    dir_watch_dog.watch(initialize=True)
+
+    test_file: Path = test_path.joinpath('he.txt')
+
+    with test_file.open(mode='w') as f: # will not fire multiple change event.
+        for _ in range(0, 10):
+            f.write('a')
+            time.sleep(0.5)
+    time.sleep(1)
+    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
+    assert len(changed_list) == 2  # create and change event.
+
+    with test_file.open() as f:
+        v = f.read()
+        assert len(v) == 10
+
+def test_counter(vdb: Vedis):  # pylint: disable=W0621
+    i: int = vdb.incr('k')
+    assert i == 1
+    i = vdb.incr('k')
+    assert i == 2
+    b = vdb.get('k')
+    assert int(b) == 2
+
+def test_hash_get(vdb: Vedis):  # pylint: disable=W0621
+    s = vdb.hget("a-hash-table", 'abc')
+    assert not s
+    b = vdb.hexists('a-hash-table', 'abc')
+    assert not b
+
+    n = vdb.hdel('a-hash-table', 'abc')
+    assert n == 0
 
 def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
     db_thread_1: DbThread = dir_watcher[0]
@@ -110,7 +174,7 @@ def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], Bat
     batch_process_thread.start()
     test_path.joinpath('he.txt').write_text("abc")
     time.sleep(1)
-    changed_list = list(db_thread_1.db.List(V_CHANGED_LIST_TABLE))
+    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
     for item in changed_list:
         fc: FileChange = decode_file_change(item)
         assert fc.size == 3
@@ -118,12 +182,12 @@ def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], Bat
 
     db_thread_1.file_change_queue.put(1)
     time.sleep(0.5)
-    changed_list = db_thread_1.db.List(V_CHANGED_LIST_TABLE)
+    changed_list = db_thread_1.db.List(V_MODIFIED_SET_TABLE)
     assert len(changed_list) == 1  # create and change event.
 
     db_thread_1.file_change_queue.put(1)
     time.sleep(0.5)
-    changed_list = db_thread_1.db.List(V_CHANGED_LIST_TABLE)
+    changed_list = db_thread_1.db.List(V_MODIFIED_SET_TABLE)
     assert not changed_list  # create and change event.
 
 
