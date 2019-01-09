@@ -10,16 +10,13 @@ from typing_extensions import Final
 import pytest
 from vedis import Vedis  # pylint: disable=E0611
 
-# def get_configfile() -> Path:
-#     return Path(__file__, '..', '..', 'pytest', 'dir_watcher_t.json')
-
 LIST_NAME: Final = 'one-list'
 
 lock_ob: Lock = threading.Lock()
 
 
 @pytest.fixture
-def db(tmpdir: LocalPath):
+def vdb(tmpdir: LocalPath):
     db_file = Path(tmpdir.strpath).joinpath('db')
     db: Vedis = Vedis(str(db_file.resolve()))
     yield (db)  # provide the fixture value
@@ -29,16 +26,16 @@ def db(tmpdir: LocalPath):
 
 
 class TestDirWatcher(object):
-    def test_true(self, db: Vedis):
-        assert isinstance(db, Vedis)
+    def test_true(self, vdb: Vedis):  # pylint: disable=W0621
+        assert isinstance(vdb, Vedis)
 
         def to_run():
             for _ in range(0, 10):
                 # list_ob: List = db.List(LIST_NAME)
-                with db.transaction():
+                with vdb.transaction():
                     # lock_ob.acquire(True)
                     # list_ob.append('hello')
-                    db.lpush(LIST_NAME, 'hello')
+                    vdb.lpush(LIST_NAME, 'hello')
                     # lock_ob.release()
                 time.sleep(0.1)
 
@@ -56,13 +53,13 @@ class TestDirWatcher(object):
         # list_ob: List = db.List(LIST_NAME)
         for _ in range(0, 10):
             # list_ob.append('hello')
-            db.lpush(LIST_NAME, 'hello')
+            vdb.lpush(LIST_NAME, 'hello')
             # lock_ob.acquire(True)
             # len_list.append(db.llen(LIST_NAME))
             # lock_ob.release()
             # time.sleep(0.2)
         time.sleep(3)
-        assert db.llen(LIST_NAME) == 30
+        assert vdb.llen(LIST_NAME) == 30
 
         assert ts[0] != ts[1]
 

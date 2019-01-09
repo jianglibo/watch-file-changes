@@ -9,5 +9,6 @@ V_STANDARD_HASH_TABLE: Final = "standard"
 V_MODIFIED_SET_TABLE: Final = "modified"
 V_CREATED_SET_TABLE: Final = "created"
 V_DELETED_SET_TABLE: Final = "deleted"
+V_INCREMENT_KEY: Final = 'incr-key'
 
 OUT_CONFIG_FILE: Final = 'OUT_CONFIG_FILE'

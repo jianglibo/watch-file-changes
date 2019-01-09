@@ -1,4 +1,4 @@
-import os, json, sys, re
+import os, sys, re
 import time
 from pathlib import Path
 import logging
@@ -8,6 +8,7 @@ from typing import NamedTuple, List, Optional, Dict, Any, Iterator, Pattern
 # from dir_watch_objects import LoggingSelectiveEventHandler, WatchConfig, DirWatchDog, get_watch_config
 islinux: bool = 'nux' in sys.platform
 
+from flask import json
 import getopt
 from vedis import Vedis # pylint: disable=E0611
 from collections import namedtuple

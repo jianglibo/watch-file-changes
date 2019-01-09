@@ -1,4 +1,4 @@
-import json
+from flask import json
 import time
 from os import stat_result
 from pathlib import Path
@@ -47,7 +47,7 @@ def db_thread(db_file_path: Path):  # pylint: disable=W0621
     batch_queue: Queue = Queue()
     dbt: DbThread = DbThread(str(db_file_path), data_queue, batch_queue)
     yield dbt
-    dbt.file_change_queue.put(None)
+    dbt.data_queue.put(None)
 
 
 @pytest.fixture(params=[{"tid": 0, "watch_paths": [{
@@ -65,8 +65,8 @@ def dir_watcher(request, db_thread: DbThread, tmpdir: LocalPath):  # pylint: dis
     watch_paths: List[Dict] = request.param['watch_paths']
     td: LocalPath = tmpdir
     watch_paths[0]['path'] = td.join('dd').mkdir()
-    dir_watch_dog = DirWatchDog(watch_paths, db_thread.file_change_queue)
-    bpt: BatchProcessThread = BatchProcessThread(db_thread.batch_file_change_queue)
+    dir_watch_dog = DirWatchDog(watch_paths, db_thread.data_queue)
+    bpt: BatchProcessThread = BatchProcessThread(db_thread.controll_queue)
     yield (db_thread, dir_watch_dog, request.param['tid'], watch_paths, bpt)
     dir_watch_dog.stop_watch()
     bpt.batch_file_change_queue.put(None)
@@ -82,7 +82,7 @@ def test_open_vedis(vdb: Vedis):  # pylint: disable=W0621
 
 
 def test_queue_db(db_thread: DbThread):  # pylint: disable=W0621
-    data_queue = db_thread.file_change_queue
+    data_queue = db_thread.data_queue
     db_thread.start()
     for i in range(0, 10):
         data_queue.put('abc%s' % i)

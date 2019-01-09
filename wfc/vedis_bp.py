@@ -1,85 +1,81 @@
-import json
 from logging import Logger
-from typing import Dict, List, Set, Tuple
+from typing import List, Set
 
 from flask import Blueprint, Response, current_app
-from mypy_extensions import TypedDict
 
-from vedis import Vedis  # pylint: disable=E0611
+from vedis import Vedis
+from wfc.dir_watcher.watch_values import FileChange, decode_file_change
 
 from . import my_vedis
 from .constants import V_MODIFIED_SET_TABLE
 from .typed_value import get_current_args
+from flask import json
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
 
 
-class ListOfTupleDict(TypedDict):
-    length: int
-    values: List[Tuple[str, str]]
+class FileModifiedResponse():
+    def __init__(self, length: int, values: List[FileChange]):
+        self.length = length
+        self.values = values
 
 
-class ListStrDict(TypedDict):
-    length: int
-    values: List[str]
-
-
-def get_hash_content(app, table_name: str, length_only: bool = False) -> ListOfTupleDict:
+def get_hash_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
     try:
         if length_only:
-            d = ListOfTupleDict(length=db.hlen(table_name), values=[])
+            d = FileModifiedResponse(length=db.hlen(table_name), values=[])
         else:
-            hash_obj: Dict[str, str] = db.hgetall(table_name)
-            hash_list: List[Tuple[str, str]] = list(map(lambda itm: (itm[0], itm[1]),
-                                                        hash_obj.items()))
-            d = ListOfTupleDict(length=len(hash_list), values=hash_list)
+            hash_obj: List[str] = list(db.hgetall(table_name).values())
+            hash_list: List[FileChange] = list(
+                map(decode_file_change, hash_obj))
+            d = FileModifiedResponse(length=len(hash_list), values=hash_list)
     except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
-        d = ListOfTupleDict(length=0, values=[])
+        d = FileModifiedResponse(length=0, values=[])
     return d
 
 
-def get_set_content(app, table_name: str, length_only: bool = False) -> ListStrDict:
+def get_set_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
     try:
         if length_only:
-            d = ListStrDict(length=db.scard(table_name), values=[])
+            d = FileModifiedResponse(length=db.scard(table_name), values=[])
         else:
             set_obj: Set[str] = db.smembers(table_name)
-            set_iter: List[str] = list(map(lambda bts: bts, set_obj))
-            d = ListStrDict(length=len(set_iter), values=set_iter)
+            set_iter: List[FileChange] = list(map(decode_file_change, set_obj))
+            d = FileModifiedResponse(length=len(set_iter), values=set_iter)
     except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
-        d = ListStrDict(length=0, values=[])
+        d = FileModifiedResponse(length=0, values=[])
     return d
 
 
-def get_list_content(app, table_name: str, length_only: bool = False) -> ListStrDict:
+def get_list_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
     try:
         if length_only:
-            d = ListStrDict(length=db.llen(table_name), values=[])
+            d = FileModifiedResponse(length=db.llen(table_name), values=[])
         else:
-            set_obj: List[bytes] = db.List(table_name)
-            set_iter: List[str] = list(map(lambda bts: bts.decode(), set_obj))
-            d = ListStrDict(length=len(set_iter), values=set_iter)
+            set_obj: List[str] = db.List(table_name)
+            set_iter: List[FileChange] = list(map(decode_file_change, set_obj))
+            d = FileModifiedResponse(length=len(set_iter), values=set_iter)
     except Exception as e:  # pylint: disable=W0703
         logger.error(e, exc_info=True)
-        d = ListStrDict(length=0, values=[])
+        d = FileModifiedResponse(length=0, values=[])
     return d
 
 
 @bp.route('/list', methods=['GET'])
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
-    d: ListOfTupleDict = get_set_content(
+    d: FileModifiedResponse = get_set_content(
         current_app, V_MODIFIED_SET_TABLE, length_only=length_only)
-    r = Response(json.dumps(d), mimetype="text/plain")
-    return r
+    return json.jsonify(length=d.length,
+                        values=d.values)
 
 # @bp.route('/list-modified', methods=['GET'])
 # def list_modified():

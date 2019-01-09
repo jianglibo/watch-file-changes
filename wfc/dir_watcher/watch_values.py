@@ -112,16 +112,16 @@ class FileChange():
             return False
         return True
 
+    def as_dict(self):
+        return dict(fn=self.fn,
+                    ct=self.ct,
+                    mt=self.mt,
+                    size=self.size,
+                    cv=self.cv,
+                    ts=self.ts)
+
     def deep_equal(self, other) -> bool:
         pass
-
-    # def to_bytes(self) -> bytes:
-    #     return b'%b\x00%b\x00%b\x00%b\x00%b' % (
-    #         self.fn.encode(),
-    #         str(self.ct).encode(),
-    #         str(self.mt).encode(),
-    #         str(self.size).encode(),
-    #         self.cv.encode() if self.cv else b'')
 
 
 class WatchConfig():

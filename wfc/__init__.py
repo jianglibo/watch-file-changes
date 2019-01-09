@@ -1,16 +1,18 @@
-import os
 import sys
+import os
 from typing import List
-
-from . import my_vedis, vedis_bp
-from .constants import OUT_CONFIG_FILE, WATCH_PATHES
-from .dir_watcher.dir_watcher_dog import DirWatchDog
-from flask import Flask, Response
-from logging.config import dictConfig
-
 import logging
 import threading
 from queue import Queue
+
+from . import my_vedis, vedis_bp
+from .constants import OUT_CONFIG_FILE, WATCH_PATHES
+from .dir_watcher import dir_watcher_dog
+from flask import Flask, Response
+from flask.json import JSONEncoder
+from logging.config import dictConfig
+
+from .dir_watcher.watch_values import FileChange
 
 
 dictConfig({
@@ -40,18 +42,32 @@ def find_data_file(filename):
         datadir = os.path.dirname(__file__)
     return os.path.join(datadir, filename)
 
+class CustomJSONEncoder(JSONEncoder):
 
-def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True, test_config=None):
+    def default(self, o):  # pylint: disable=E0202
+        try:
+            if isinstance(o, FileChange):
+                return o.as_dict()
+            iterable = iter(o)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return JSONEncoder.default(self, o)
+
+
+def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True):
     app = Flask(__name__, instance_relative_config=True)
-    try:
-        # a string or an actual config object.
-        app.config.from_object('config.default')
-        # app.config.from_pyfile('config.py') # half function fo from_object.
-        # app.config.from_envvar('abc') # app.config.from_pyfile(os.environ['abc'])
-        # a string or an actual config object.
-        app.config.from_object('config.%s' % app.config['ENV'])
-    except Exception as e:
-        logging.error(e, exc_info=True)
+    app.json_encoder = CustomJSONEncoder
+    # try:
+    # a string or an actual config object.
+    app.config.from_object('config.default')
+    # app.config.from_pyfile('config.py') # half function fo from_object.
+    # app.config.from_envvar('abc') # app.config.from_pyfile(os.environ['abc'])
+    # a string or an actual config object.
+    app.config.from_object('config.%s' % app.config['ENV'])
+    # except Exception as e:
+        # logging.error(e, exc_info=True)
 
     if OUT_CONFIG_FILE in os.environ:
         # app.config.from_pyfile(os.environ['abc'])
@@ -71,7 +87,7 @@ def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True, test_c
     if init_vedis:
         my_vedis.init_app(app, data_queue)
     if init_watch_dog:
-        DirWatchDog(app.config[WATCH_PATHES], data_queue).watch(initialize=True)
+        dir_watcher_dog.DirWatchDog(app.config[WATCH_PATHES], data_queue).watch(initialize=True)
     if register_vedis:
         app.register_blueprint(vedis_bp.bp)
     return app

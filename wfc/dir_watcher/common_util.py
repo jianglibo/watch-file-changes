@@ -4,7 +4,7 @@
 # https://www.tutorialspoint.com/python/python_lists.htm
 # https://www.python-course.eu/lambda.php
 
-import os, io, json, codecs, urllib.request
+import os, io, codecs, urllib.request
 from global_static import PyGlobal, BorgConfiguration, Configuration
 import hashlib
 from functools import partial
@@ -13,6 +13,7 @@ import psutil, re, shutil, base64, tempfile, subprocess
 from typing import Iterable, NamedTuple, Text, Union, List, AnyStr, TypeVar
 from typing_extensions import Protocol
 from collections import namedtuple
+from flask import json
 
 # class SupportsAsDict(Protocol):
 #     def __init__(self, **kwages) -> None:
