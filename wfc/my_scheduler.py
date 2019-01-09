@@ -22,7 +22,7 @@ class ScheduleThread(threading.Thread):
         self.controll_queue = controll_queue
 
     def run(self):
-        schedule.every(10).seconds.do(self.archive_job)
+        schedule.every(60).seconds.do(self.archive_job)
         while not self.cease_event.is_set():
             schedule.run_pending()
             time.sleep(1)

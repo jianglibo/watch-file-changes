@@ -1,5 +1,6 @@
 # place holder.
 VEDIS_FILE = ":mem:"
+CHANGED_FOLDER = "e:/changed-folder"
 WATCH_PATHES = [
     {
         "regexes": [

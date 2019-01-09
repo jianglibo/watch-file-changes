@@ -1,75 +1,14 @@
-from flask import json
 import time
 from os import stat_result
 from pathlib import Path
-from queue import Queue
-import shutil
-from typing import Dict, List, Tuple
+from typing import Dict
 
-from flask import Response
-from py._path.local import LocalPath
+from flask import Response, json
+
 
 import pytest
-import wfc
 from vedis import Vedis
-from wfc.constants import V_MODIFIED_SET_TABLE, V_CREATED_SET_TABLE, V_STANDARD_HASH_TABLE
-from wfc.dir_watcher.dir_watcher_dog import DirWatchDog
-from wfc.dir_watcher.watch_values import FileChange, decode_file_change
-from wfc.my_vedis import BatchProcessThread, DbThread
-
-
-@pytest.fixture
-def client():
-    app = wfc.create_app()
-    app.config['TESTING'] = True
-    c = app.test_client()
-    yield c
-
-
-@pytest.fixture
-def vdb(db_file_path: Path):  # pylint: disable=W0621
-    db: Vedis = Vedis(str(db_file_path))
-    yield db
-    db.close()
-
-
-@pytest.fixture
-def db_file_path(tmpdir: LocalPath):
-    db_file: Path = Path(str(tmpdir.join('x1.vdb')))
-    yield db_file
-    if db_file.exists():
-        db_file.unlink()
-
-
-@pytest.fixture
-def db_thread(db_file_path: Path):  # pylint: disable=W0621
-    data_queue: Queue = Queue()
-    batch_queue: Queue = Queue()
-    dbt: DbThread = DbThread(str(db_file_path), data_queue, batch_queue)
-    yield dbt
-    dbt.data_queue.put(None)
-
-
-@pytest.fixture(params=[{"tid": 0, "watch_paths": [{
-        "regexes": [
-            ".*"
-        ],
-        "ignore_regexes": [
-            ".*vedisdb.*"
-        ],
-        "ignore_directories": True,
-        "case_sensitive": False,
-        "recursive": True
-    }]}])
-def dir_watcher(request, db_thread: DbThread, tmpdir: LocalPath):  # pylint: disable=W0621
-    watch_paths: List[Dict] = request.param['watch_paths']
-    td: LocalPath = tmpdir
-    watch_paths[0]['path'] = td.join('dd').mkdir()
-    dir_watch_dog = DirWatchDog(watch_paths, db_thread.data_queue)
-    bpt: BatchProcessThread = BatchProcessThread(db_thread.controll_queue)
-    yield (db_thread, dir_watch_dog, request.param['tid'], watch_paths, bpt)
-    dir_watch_dog.stop_watch()
-    bpt.batch_file_change_queue.put(None)
+from .shared_fort import vdb, db_file_path  # pylint: disable=W0611
 
 
 def test_open_vedis(vdb: Vedis):  # pylint: disable=W0621
@@ -80,61 +19,19 @@ def test_open_vedis(vdb: Vedis):  # pylint: disable=W0621
     v: str = vdb.hget('a-hash', 'abc')
     assert int(v) == 55
 
+def test_pop_set(vdb: Vedis):  # pylint: disable=W0621
+    empty_set = vdb.Set('not-exists-set-name')
+    empty_set.add('a')
+    empty_set.pop()
+    assert empty_set.pop() is None
+    empty_set.add('a')
+    empty_set.add('b')
 
-def test_queue_db(db_thread: DbThread):  # pylint: disable=W0621
-    data_queue = db_thread.data_queue
-    db_thread.start()
-    for i in range(0, 10):
-        data_queue.put('abc%s' % i)
-    data_queue.join()
-    data_queue.put(None)
-    assert db_thread.db.llen(V_MODIFIED_SET_TABLE) == 10
-
-
-def test_move_from_out_side(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
-    db_thread_1: DbThread = dir_watcher[0]
-    db_thread_1.start()
-
-    one_path: Dict = dir_watcher[3][0]
-    test_path = Path(one_path['path'])
-    dir_watch_dog = dir_watcher[1]
-    dir_watch_dog.watch(initialize=True)
-
-    src_path: Path = Path("e:/a_file.txt")
-    src_path.write_text("hello")
-
-    shutil.move(src=str(src_path), dst=str(test_path))
-
-    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
-    assert len(changed_list) >= 1  # create and change event.
-    for cv in changed_list:
-        fc: FileChange = decode_file_change(cv)
-        assert fc.ct == 1 or fc.ct == 2
-
-
-
-def test_write_file_multiple(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
-    db_thread_1: DbThread = dir_watcher[0]
-    db_thread_1.start()
-
-    one_path: Dict = dir_watcher[3][0]
-    test_path = Path(one_path['path'])
-    dir_watch_dog = dir_watcher[1]
-    dir_watch_dog.watch(initialize=True)
-
-    test_file: Path = test_path.joinpath('he.txt')
-
-    with test_file.open(mode='w') as f: # will not fire multiple change event.
-        for _ in range(0, 10):
-            f.write('a')
-            time.sleep(0.5)
-    time.sleep(1)
-    changed_list = list(db_thread_1.db.List(V_MODIFIED_SET_TABLE))
-    assert len(changed_list) == 2  # create and change event.
-
-    with test_file.open() as f:
-        v = f.read()
-        assert len(v) == 10
+    while True:
+        item = empty_set.pop()
+        if item is None:
+            break
+    assert not empty_set
 
 def test_counter(vdb: Vedis):  # pylint: disable=W0621
     i: int = vdb.incr('k')
@@ -150,7 +47,6 @@ def test_hash_get(vdb: Vedis):  # pylint: disable=W0621
     b = vdb.hexists('a-hash-table', 'abc')
     assert not b
 
-
     n = vdb.hdel('a-hash-table', 'abc')
     assert n == 0
 
@@ -160,45 +56,6 @@ def test_db_key(vdb: Vedis):  # pylint: disable=W0621
 
 def test_db_set(vdb: Vedis):  # pylint: disable=W0621
     vdb.srem('a-set', 'k')
-
-def test_watch_db(dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict], BatchProcessThread]):  # pylint: disable=W0621
-    db_thread_1: DbThread = dir_watcher[0]
-    db_thread_1.start()
-
-    one_path: Dict = dir_watcher[3][0]
-    test_path = Path(one_path['path'])
-
-    test_path.joinpath('he0.txt').write_text("abc")
-    test_path.joinpath('he1.txt').write_text("abc")
-    test_path.joinpath('he2.txt').write_text("abc")
-
-    dir_watch_dog = dir_watcher[1]
-    dir_watch_dog.watch(initialize=True)
-
-    d = db_thread_1.db.Hash(V_STANDARD_HASH_TABLE)
-    assert len(d) == 3
-    batch_process_thread = dir_watcher[4]
-    batch_process_thread.start()
-    test_file = test_path.joinpath('he.txt')
-    test_file.write_text("abc")
-    time.sleep(1)
-    changed_list = list(db_thread_1.db.Set(V_MODIFIED_SET_TABLE))
-    for item in changed_list:
-        fc: FileChange = decode_file_change(item)
-        assert fc.size == 3
-    assert len(changed_list) == 1
-
-    assert db_thread_1.db.hlen(V_STANDARD_HASH_TABLE) == 4
-    assert db_thread_1.db.scard(V_CREATED_SET_TABLE) == 1
-    assert db_thread_1.db.scard(V_MODIFIED_SET_TABLE) == 1
-
-    test_file.unlink()
-    time.sleep(1)
-    assert db_thread_1.db.hlen(V_STANDARD_HASH_TABLE) == 3
-    assert db_thread_1.db.scard(V_CREATED_SET_TABLE) == 0
-    assert db_thread_1.db.scard(V_MODIFIED_SET_TABLE) == 1
-
-
 
 def test_file_change_equal(db_file_path: Path):  # pylint: disable=W0621
     db_file_path.write_text('hello')
@@ -229,7 +86,6 @@ def test_file_change_equal(db_file_path: Path):  # pylint: disable=W0621
     assert stat1.st_atime != stat5.st_atime
     assert stat1.st_ctime == stat5.st_ctime
     assert stat1.st_mtime != stat5.st_mtime
-    # st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid, st_size, st_atime, st_mtime, st_ctime
 
 
 def test_get_modified(client):  # pylint: disable=W0621

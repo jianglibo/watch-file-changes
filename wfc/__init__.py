@@ -48,6 +48,9 @@ class CustomJSONEncoder(JSONEncoder):
         try:
             if isinstance(o, FileChange):
                 return o.as_dict()
+            if isinstance(o, bytes):
+                bs: bytes = o
+                return bs.decode()
             iterable = iter(o)
         except TypeError:
             pass

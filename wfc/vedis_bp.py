@@ -1,7 +1,7 @@
 from logging import Logger
-from typing import List, Set
+from typing import List, Set, Union
 
-from flask import Blueprint, Response, current_app
+from flask import Blueprint, Response, current_app, json
 
 from vedis import Vedis
 from wfc.dir_watcher.watch_values import FileChange, decode_file_change
@@ -9,7 +9,6 @@ from wfc.dir_watcher.watch_values import FileChange, decode_file_change
 from . import my_vedis
 from .constants import V_MODIFIED_SET_TABLE
 from .typed_value import get_current_args
-from flask import json
 
 bp = Blueprint('vedis', __name__, url_prefix="/vedis")
 
@@ -37,20 +36,27 @@ def get_hash_content(app, table_name: str, length_only: bool = False) -> FileMod
     return d
 
 
-def get_set_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
+# def get_set_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
+#     logger: Logger = app.logger
+#     db: Vedis = my_vedis.get_db()
+#     try:
+#         if length_only:
+#             d = FileModifiedResponse(length=db.scard(table_name), values=[])
+#         else:
+#             list_obj: List[str] = list(db.smembers(table_name))
+#             d = FileModifiedResponse(length=len(list_obj), values=list_obj)
+#     except Exception as e:  # pylint: disable=W0703
+#         logger.error(e, exc_info=True)
+#         d = FileModifiedResponse(length=0, values=[])
+#     return d
+
+def get_set_content(app, table_name: str, length_only: bool = False) -> Union[List[str], int]:
     logger: Logger = app.logger
     db: Vedis = my_vedis.get_db()
-    try:
-        if length_only:
-            d = FileModifiedResponse(length=db.scard(table_name), values=[])
-        else:
-            set_obj: Set[str] = db.smembers(table_name)
-            set_iter: List[FileChange] = list(map(decode_file_change, set_obj))
-            d = FileModifiedResponse(length=len(set_iter), values=set_iter)
-    except Exception as e:  # pylint: disable=W0703
-        logger.error(e, exc_info=True)
-        d = FileModifiedResponse(length=0, values=[])
-    return d
+    if length_only:
+        return db.scard(table_name)
+    else:
+        return list(db.smembers(table_name))
 
 
 def get_list_content(app, table_name: str, length_only: bool = False) -> FileModifiedResponse:
@@ -72,10 +78,11 @@ def get_list_content(app, table_name: str, length_only: bool = False) -> FileMod
 @bp.route('/list', methods=['GET'])
 def list_list():
     length_only = get_current_args().get('length-only', None, bool)
-    d: FileModifiedResponse = get_set_content(
-        current_app, V_MODIFIED_SET_TABLE, length_only=length_only)
-    return json.jsonify(length=d.length,
-                        values=d.values)
+    r = get_set_content(current_app, V_MODIFIED_SET_TABLE, length_only=length_only)
+    if isinstance(r, int):
+        return json.jsonify(length=r)
+    else:
+        return json.jsonify(length=len(r), values=r)
 
 # @bp.route('/list-modified', methods=['GET'])
 # def list_modified():
