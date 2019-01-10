@@ -1,14 +1,13 @@
+import threading
 import time
+from pathlib import Path
 from typing import Tuple
 
+import pytest
 from filelock import FileLock, Timeout
 
-import threading
-from pathlib import Path
 # very strange thing. If import name contains 'lock', it will failed.
 from .shared_fort import file_pair  # pylint: disable=W0611
-import pytest
-
 
 
 class TestFileLock():
@@ -19,11 +18,16 @@ class TestFileLock():
 
         def a_thread():
             with FileLock(f_lock, timeout=1):
-                time.sleep(3)
+                time.sleep(4)
 
         t = threading.Thread(target=a_thread)
         t.start()
         with pytest.raises(Timeout):
             with FileLock(f_lock, timeout=1):
                 pass
-        t.stop()
+
+        t1 = int(time.time())
+        with FileLock(f_lock):  # it's blocked.
+            t2 = int(time.time())
+            assert t2 - t1 > 2
+        time.sleep(0.2)
