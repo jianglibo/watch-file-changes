@@ -1,18 +1,19 @@
-import sys
 import os
+import sys
 from typing import List
-import logging
-import threading
-from queue import Queue
 
 from . import my_vedis, vedis_bp
 from .constants import OUT_CONFIG_FILE, WATCH_PATHES
 from .dir_watcher import dir_watcher_dog
+from .dir_watcher.watch_values import FileChange
 from flask import Flask, Response
 from flask.json import JSONEncoder
 from logging.config import dictConfig
 
-from .dir_watcher.watch_values import FileChange
+import logging
+import threading
+from queue import Queue
+from wfc import my_scheduler
 
 
 dictConfig({
@@ -90,6 +91,7 @@ def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True):
 
     if init_vedis:
         my_vedis.init_app(app, que)
+        my_scheduler.init_app(app, que)
     if init_watch_dog:
         dir_watcher_dog.DirWatchDog(
             app.config[WATCH_PATHES], que).watch(initialize=True)

@@ -1,10 +1,11 @@
-import logging
-import threading
 import time
-from enum import Enum
-from queue import Queue
 
 import schedule
+
+import logging
+import threading
+from enum import Enum
+from queue import Queue
 
 
 class ControllAction(Enum):
@@ -26,3 +27,8 @@ class ScheduleThread(threading.Thread):
         while not self.cease_event.is_set():
             schedule.run_pending()
             time.sleep(1)
+
+def init_app(app, que: Queue) -> threading.Event:
+    ev = threading.Event()
+    ScheduleThread(ev, que).start()
+    return ev

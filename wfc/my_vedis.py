@@ -1,19 +1,21 @@
-from typing import Set, Tuple, Union
+from typing import Set, Tuple, Union, List
 
 from .constants import VEDIS_FILE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, \
     V_INCREMENT_KEY, V_MODIFIED_SET_TABLE, V_STANDARD_HASH_TABLE, \
-    Z_CHANGED_FOLDER
+    Z_CHANGED_FOLDER, LOCK_FILE_NAME
 from .dir_watcher.watch_values import FileChange, decode_file_change, \
     encode_file_change
+from filelock import FileLock
 from flask import current_app, g
+from my_scheduler import ControllAction
 from vedis import Vedis
 
 import logging
 import threading
 import traceback
-from my_scheduler import ControllAction, ScheduleThread
 from pathlib import Path
-from queue import Empty, Queue
+from queue import Queue
+from wfc import dir_util
 from wfc.dir_watcher.watch_values import ChangeType
 from zipfile import ZipFile
 
@@ -27,6 +29,7 @@ class DbThread(threading.Thread):
     """Why choose only one queue? Because we want block query.
 
     """
+
     def __init__(self, db_file: str,
                  que: Queue,
                  change_folder: Union[Path, str],
@@ -42,6 +45,10 @@ class DbThread(threading.Thread):
 
         if not self.change_folder.exists():
             self.change_folder.mkdir()
+        self.lock_file_path = self.change_folder.joinpath(LOCK_FILE_NAME)
+
+        if self.lock_file_path.exists():
+            self.lock_file_path.unlink()
 
     def delete_count_key(self, count_key: str):
         try:
@@ -105,51 +112,45 @@ class DbThread(threading.Thread):
         except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
 
-    def process_data_queue(self) -> bool:
-        try:
-            item = self.que.get(block=False)
-            if item is None:
-                return False
-            if isinstance(item, FileChange):
-                self._insert_to_db(item)
-            elif isinstance(item, Path):
-                self.insert_standard(item)
-            else:
-                logging.error(
-                    "unknown data: %s receive in db_thread.", type(item))
-                traceback.print_stack()
-            self.que.task_done()
-        except Empty:
-            pass
-        except Exception as e:  # pylint: disable=W0703
-            logging.error(e, exc_info=True)
-        return True
-
     def process_action(self, action: ControllAction):
+        """We do archive job in specified intervals.
+        Does it necessary to create a new zip file on every trigger?
+        We get the max file name under the folder, check it's length,
+        if larger then specified value, create a new zip file.
+        If we archive at 10 seconds interval, at what interval can we
+        move the file to other place?
+        The archive interval should small than move interval, the min of two
+        if the data protect window.
+        """
         if action == ControllAction.ArchiveChange:
-            with self.db.transaction():
-                all_changed_file_names: Set[str] = self.db.Set(
-                    V_MODIFIED_SET_TABLE)
-                while True:
-                    file_name = all_changed_file_names.pop()
-                    if file_name is None:
-                        break
-                    if isinstance(file_name, bytes):
-                        file_name_str = file_name.decode()
-                    zip_file_path = self.change_folder.joinpath(
-                        "%s.zip" % self.db.incr(V_INCREMENT_KEY))
-                    with ZipFile(zip_file_path, mode='a') as zip_file:
-                        try:
-                            zip_file.write(file_name_str)
-                        except TypeError as te:
-                            logging.error(te, exc_info=True)
-                        except OSError as oe:
-                            logging.error(oe, exc_info=True)
-                self.db.commit()
+            with FileLock(self.lock_file_path):
+                with self.db.transaction():
+                    all_changed_file_names: Set[str] = self.db.Set(
+                        V_MODIFIED_SET_TABLE)
+                    if all_changed_file_names:
+                        files: List[Path] = dir_util.list_dir_order_by_digits(self.change_folder)
+                        if files:
+                            zip_file_path = files[-1]
+                        else:
+                            zip_file_path = self.change_folder.joinpath(
+                                "%s.zip" % self.db.incr(V_INCREMENT_KEY))
+                        while True:
+                            file_name = all_changed_file_names.pop()
+                            if file_name is None:
+                                break
+                            if isinstance(file_name, bytes):
+                                file_name_str = file_name.decode()
+                            with ZipFile(zip_file_path, mode='a') as zip_file:
+                                try:
+                                    zip_file.write(file_name_str)
+                                except TypeError as te:
+                                    logging.error(te, exc_info=True)
+                                except OSError as oe:
+                                    logging.error(oe, exc_info=True)
+                    self.db.commit()
         else:
             logging.error("unknown action: %s receive in db_thread.", action)
             traceback.print_stack()
-
 
     def run(self):
         """Entry point.
@@ -174,13 +175,11 @@ class DbThread(threading.Thread):
             self.que.task_done()
 
 
-
 def init_app(app, que: Queue) -> Tuple[DbThread]:
     app.teardown_appcontext(close_db)
     db_thread = DbThread(
         app.config[VEDIS_FILE], que, app.config[Z_CHANGED_FOLDER])
     db_thread.start()
-    ScheduleThread(cease_schedule_run, que).start()
     return (db_thread,)
 
 
