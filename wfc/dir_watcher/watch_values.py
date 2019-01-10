@@ -69,9 +69,9 @@ class ChangeType():
 
 
 class FileChange():
-    """
-      we get file name from file system event handler which is a string. But vedis value is always bytes.
-      Because vedis list will truncate 00 byte, so we use str instead.
+    """We get file name from file system event handler, it is a string.
+    But vedis value is always bytes.
+    Because vedis list will truncate 00 byte, so we use str instead.
     """
     fn: str
     ct: int

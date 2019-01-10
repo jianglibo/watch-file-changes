@@ -42,6 +42,7 @@ def find_data_file(filename):
         datadir = os.path.dirname(__file__)
     return os.path.join(datadir, filename)
 
+
 class CustomJSONEncoder(JSONEncoder):
 
     def default(self, o):  # pylint: disable=E0202
@@ -70,7 +71,7 @@ def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True):
     # a string or an actual config object.
     app.config.from_object('config.%s' % app.config['ENV'])
     # except Exception as e:
-        # logging.error(e, exc_info=True)
+    # logging.error(e, exc_info=True)
 
     if OUT_CONFIG_FILE in os.environ:
         # app.config.from_pyfile(os.environ['abc'])
@@ -85,12 +86,13 @@ def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True):
         r = Response("\n".join(info_pairs), mimetype="text/plain")
         return r
 
-    data_queue = Queue()
+    que = Queue()
 
     if init_vedis:
-        my_vedis.init_app(app, data_queue)
+        my_vedis.init_app(app, que)
     if init_watch_dog:
-        dir_watcher_dog.DirWatchDog(app.config[WATCH_PATHES], data_queue).watch(initialize=True)
+        dir_watcher_dog.DirWatchDog(
+            app.config[WATCH_PATHES], que).watch(initialize=True)
     if register_vedis:
         app.register_blueprint(vedis_bp.bp)
     return app

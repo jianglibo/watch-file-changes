@@ -30,6 +30,19 @@ def tmppath(tmpdir: LocalPath):
     if pp.exists():
         shutil.rmtree(pp)
 
+@pytest.fixture
+def file_pair(tmpdir: LocalPath):
+    p = tmpdir.mkdir('a_path_with_lock')
+    pp: Path = Path(p.strpath)
+    if pp.exists():
+        shutil.rmtree(pp)
+    pp.mkdir()
+
+    a_file = pp.joinpath('a_file.txt')
+    a_lock_file = pp.joinpath('a_file.txt.lck')
+    yield (a_file, a_lock_file)
+    if pp.exists():
+        shutil.rmtree(pp)
 
 @pytest.fixture
 def client():
@@ -65,10 +78,9 @@ def change_folder_path(tmpdir: LocalPath):
 
 @pytest.fixture
 def db_thread(db_file_path: Path, change_folder_path: Path):  # pylint: disable=W0621
-    data_queue: Queue = Queue()
-    controll_queue: Queue = Queue()
+    que: Queue = Queue()
     db_thread_in: DbThread = DbThread(
-        str(db_file_path), data_queue, controll_queue, change_folder_path)
+        str(db_file_path), que, change_folder_path)
     yield db_thread_in
-    db_thread_in.data_queue.put(None)
-    time.sleep(1)
+    db_thread_in.que.put(None)
+    time.sleep(0.2)

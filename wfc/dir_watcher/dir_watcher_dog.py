@@ -10,14 +10,14 @@ from .watch_values import WatchConfig, WatchPath
 
 
 class DirWatchDog():
-    def __init__(self, wc_or_paths: Union[WatchConfig, List[Dict]], data_queue: Queue) -> None:
+    def __init__(self, wc_or_paths: Union[WatchConfig, List[Dict]], que: Queue) -> None:
         if isinstance(wc_or_paths, WatchConfig):
             self.wc = wc_or_paths
         else:
             self.wc = WatchConfig(wc_or_paths)
         self.save_me = True
         self.observers: List[Observer] = []
-        self.data_queue = data_queue
+        self.que = que
 
     def wait_seconds(self, seconds: int) -> None:
         for obs in self.observers:
@@ -27,16 +27,19 @@ class DirWatchDog():
         if initialize:
             for item in self.wc.watch_paths:
                 wp: WatchPath = item
-                for current_dir, __dirs_under_current_dir, files_under_current_dir in os.walk(wp.path, topdown=False):
+                for current_dir, \
+                        __dirs_under_current_dir, \
+                        files_under_current_dir in os.walk(wp.path, topdown=False):
 
-                    paths_under_current_dir: List[Path] = [Path(current_dir, f) for f in files_under_current_dir]
+                    paths_under_current_dir: List[Path] = [
+                        Path(current_dir, f) for f in files_under_current_dir]
                     for p in paths_under_current_dir:
                         if not wp.ignored(str(p), p.is_dir()):
-                            self.data_queue.put(p)
+                            self.que.put(p)
 
         for wp in self.wc.watch_paths:
             event_handler = LoggingSelectiveEventHandler(
-                self.data_queue, wp)
+                self.que, wp)
             path_to_observe: str = str(wp.path.resolve())
             assert Path(path_to_observe).exists()
             observer = Observer()

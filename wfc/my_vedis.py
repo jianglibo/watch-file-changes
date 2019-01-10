@@ -1,4 +1,3 @@
-import time
 from typing import Set, Tuple, Union
 
 from .constants import VEDIS_FILE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, \
@@ -16,7 +15,7 @@ from my_scheduler import ControllAction, ScheduleThread
 from pathlib import Path
 from queue import Empty, Queue
 from wfc.dir_watcher.watch_values import ChangeType
-from zipfile import ZipFile, ZipInfo
+from zipfile import ZipFile
 
 
 lock = threading.Lock()
@@ -25,15 +24,16 @@ cease_schedule_run = threading.Event()
 
 
 class DbThread(threading.Thread):
+    """Why choose only one queue? Because we want block query.
+
+    """
     def __init__(self, db_file: str,
-                 data_queue: Queue,
-                 controll_queue: Queue,
+                 que: Queue,
                  change_folder: Union[Path, str],
                  **kwargs):
         super().__init__(**kwargs)
         self.db = Vedis(db_file)
-        self.data_queue: Queue = data_queue
-        self.controll_queue: Queue = controll_queue
+        self.que: Queue = que
         self.change_folder: Path
         if isinstance(change_folder, str):
             self.change_folder = Path(change_folder)
@@ -107,7 +107,7 @@ class DbThread(threading.Thread):
 
     def process_data_queue(self) -> bool:
         try:
-            item = self.data_queue.get(block=False)
+            item = self.que.get(block=False)
             if item is None:
                 return False
             if isinstance(item, FileChange):
@@ -118,61 +118,69 @@ class DbThread(threading.Thread):
                 logging.error(
                     "unknown data: %s receive in db_thread.", type(item))
                 traceback.print_stack()
-            self.data_queue.task_done()
+            self.que.task_done()
         except Empty:
             pass
         except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
         return True
 
-    def process_controll_queue(self) -> bool:
-        try:
-            item: ControllAction = self.controll_queue.get(block=False)
-            if item == ControllAction.ArchiveChange:
-                with self.db.transaction():
-                    all_changed_file_names: Set[str] = self.db.Set(
-                        V_MODIFIED_SET_TABLE)
-                    while True:
-                        file_name = all_changed_file_names.pop()
-                        if file_name is None:
-                            break
-                        if isinstance(file_name, bytes):
-                            file_name_str = file_name.decode()
-                        zip_file_path = self.change_folder.joinpath("%s.zip" % self.db.incr(V_INCREMENT_KEY))
-                        with ZipFile(zip_file_path, mode='a') as zip_file:
-                            try:
-                                zip_file.write(file_name_str)
-                            except TypeError as te:
-                                logging.error(te, exc_info=True)
-                            except OSError as oe:
-                                logging.error(oe, exc_info=True)
-                    self.db.commit()
-            else:
-                logging.error("unknown action: %s receive in db_thread.", item)
-                traceback.print_stack()
-            self.controll_queue.task_done()
-        except Empty:
-            pass
-        except Exception as e:  # pylint: disable=W0703
-            logging.error(e, exc_info=True)
-        return True
+    def process_action(self, action: ControllAction):
+        if action == ControllAction.ArchiveChange:
+            with self.db.transaction():
+                all_changed_file_names: Set[str] = self.db.Set(
+                    V_MODIFIED_SET_TABLE)
+                while True:
+                    file_name = all_changed_file_names.pop()
+                    if file_name is None:
+                        break
+                    if isinstance(file_name, bytes):
+                        file_name_str = file_name.decode()
+                    zip_file_path = self.change_folder.joinpath(
+                        "%s.zip" % self.db.incr(V_INCREMENT_KEY))
+                    with ZipFile(zip_file_path, mode='a') as zip_file:
+                        try:
+                            zip_file.write(file_name_str)
+                        except TypeError as te:
+                            logging.error(te, exc_info=True)
+                        except OSError as oe:
+                            logging.error(oe, exc_info=True)
+                self.db.commit()
+        else:
+            logging.error("unknown action: %s receive in db_thread.", action)
+            traceback.print_stack()
+
 
     def run(self):
+        """Entry point.
+        Query queue blockingly until None is received.
+        There is no necessary to time sleep, it' blocked.
+        """
         while True:
-            if not self.process_data_queue():
+            item: Union[FileChange, Path, ControllAction] = self.que.get()
+            if item is None:
                 self.db.close()
                 break
-            self.process_controll_queue()
-            time.sleep(0.5)
+            if isinstance(item, FileChange):
+                self._insert_to_db(item)
+            elif isinstance(item, Path):
+                self.insert_standard(item)
+            elif isinstance(item, ControllAction):
+                self.process_action(item)
+            else:
+                logging.error(
+                    "unknown data: %s receive in db_thread.", type(item))
+                traceback.print_stack()
+            self.que.task_done()
 
 
-def init_app(app, data_queue: Queue) -> Tuple[DbThread]:
+
+def init_app(app, que: Queue) -> Tuple[DbThread]:
     app.teardown_appcontext(close_db)
-    controll_queue: Queue = Queue()
     db_thread = DbThread(
-        app.config[VEDIS_FILE], data_queue, controll_queue, app.config[Z_CHANGED_FOLDER])
+        app.config[VEDIS_FILE], que, app.config[Z_CHANGED_FOLDER])
     db_thread.start()
-    ScheduleThread(cease_schedule_run, controll_queue).start()
+    ScheduleThread(cease_schedule_run, que).start()
     return (db_thread,)
 
 
