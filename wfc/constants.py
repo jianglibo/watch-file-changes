@@ -15,3 +15,4 @@ V_INCREMENT_KEY: Final = 'incr-key'
 
 OUT_CONFIG_FILE: Final = 'OUT_CONFIG_FILE'
 LOCK_FILE_NAME: Final = 'lock.lck'
+PENDING_FOLDER_NAME: Final = 'pending'

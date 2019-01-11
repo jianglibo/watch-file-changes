@@ -1,6 +1,8 @@
 # place holder.
 VEDIS_FILE = ":mem:"
 CHANGED_FOLDER = "e:/changed-folder"
+ARCHIVE_INTERVAL = 60
+PENDING_MOVE_INTERVAL = 80
 WATCH_PATHES = [
     {
         "regexes": [

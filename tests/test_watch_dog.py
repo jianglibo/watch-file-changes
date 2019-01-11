@@ -2,7 +2,7 @@ import time
 from typing import Dict, List, Tuple
 
 import pytest
-from .shared_fort import change_folder_path, db_file_path, db_thread  # pylint: disable=W0611
+from .shared_fort import change_folder_path, db_file_path, db_thread
 from py._path.local import LocalPath
 
 import shutil
@@ -11,33 +11,35 @@ from wfc.constants import V_CREATED_SET_TABLE, V_MODIFIED_SET_TABLE, \
     V_STANDARD_HASH_TABLE
 from wfc.dir_watcher.dir_watcher_dog import DirWatchDog
 from wfc.dir_watcher.watch_values import FileChange, decode_file_change
+from wfc.my_scheduler import ControllAction
 from wfc.my_vedis import DbThread
 
 
 @pytest.fixture(params=[{"tid": 0, "watch_paths": [{
-        "regexes": [
-            ".*"
-        ],
-        "ignore_regexes": [
-            ".*vedisdb.*"
-        ],
-        "ignore_directories": True,
-        "case_sensitive": False,
-        "recursive": True
-    }]}])
+    "regexes": [
+        ".*"
+    ],
+    "ignore_regexes": [
+        ".*vedisdb.*"
+    ],
+    "ignore_directories": True,
+    "case_sensitive": False,
+    "recursive": True
+}]}])
 def dir_watcher(request, db_thread: DbThread, tmpdir: LocalPath):  # pylint: disable=W0621
     watch_paths: List[Dict] = request.param['watch_paths']
     td: LocalPath = tmpdir
     watch_paths[0]['path'] = td.join('dd').mkdir()
     dir_watch_dog = DirWatchDog(watch_paths, db_thread.que)
-    yield (db_thread, dir_watch_dog, request.param['tid'], watch_paths)
+    one_watched_path = Path(watch_paths[0]['path'])
+    yield (db_thread, dir_watch_dog, request.param['tid'], watch_paths, one_watched_path)
     dir_watch_dog.stop_watch()
 
 
 class TestWatchDog():
     def test_move_from_out_side(self, dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict]]):  # pylint: disable=W0621
         """When move file from outside into monitored folder what happen?
-        Should got 1 V_MODIFIED_SET_TABLE, 1 V_CREATED_SET_TABLE
+        Should got 1 V_MODIFIED_SET_TABLE record, 1 V_CREATED_SET_TABLE record
         """
         db_thread_1: DbThread = dir_watcher[0]
         db_thread_1.start()
@@ -69,28 +71,33 @@ class TestWatchDog():
         db_thread_1.que.put(None)
         time.sleep(1)
 
-
-    def test_write_file_multiple(self, dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict]]):  # pylint: disable=W0621
+    def test_write_file_multiple(self, dir_watcher: Tuple[  # pylint: disable=W0621
+            DbThread,
+            DirWatchDog,
+            int,
+            List[Dict],
+            Path]):
         """When does the file change event fired?
         when it's be closed.
         """
         db_thread_1: DbThread = dir_watcher[0]
         db_thread_1.start()
 
-        one_path: Dict = dir_watcher[3][0]
-        test_path = Path(one_path['path'])
+        test_path = dir_watcher[4]
         dir_watch_dog = dir_watcher[1]
         dir_watch_dog.watch(initialize=True)
 
         test_file_path: Path = test_path.joinpath('he.txt')
 
-        with test_file_path.open(mode='w') as f: # will not fire multiple change event.
+        # will not fire multiple change event.
+        with test_file_path.open(mode='w') as f:
             for _ in range(0, 10):
                 f.write('a')
                 time.sleep(0.2)
         now = int(time.time())
         time.sleep(0.5)
-        standard_file = db_thread_1.db.hget(V_STANDARD_HASH_TABLE, str(test_file_path))
+        standard_file = db_thread_1.db.hget(
+            V_STANDARD_HASH_TABLE, str(test_file_path))
         fc: FileChange = decode_file_change(standard_file)
         assert int(fc.ts) == now  # change happened at file's closing point.
         time.sleep(0.5)
@@ -103,13 +110,15 @@ class TestWatchDog():
             v = f.read()
             assert len(v) == 10
 
-
-    def test_watch_db(self, dir_watcher: Tuple[DbThread, DirWatchDog, int, List[Dict]]):  # pylint: disable=W0621
+    def test_watch_db(self, dir_watcher: Tuple[  # pylint: disable=W0621
+            DbThread, DirWatchDog, int, List[Dict], Path]):
+        """Should initialize directory tree.
+        should handle create and remove files.
+        """
         db_thread_1: DbThread = dir_watcher[0]
         db_thread_1.start()
 
-        one_path: Dict = dir_watcher[3][0]
-        test_path = Path(one_path['path'])
+        test_path = dir_watcher[4]
 
         test_path.joinpath('he0.txt').write_text("abc")
         test_path.joinpath('he1.txt').write_text("abc")
@@ -139,3 +148,26 @@ class TestWatchDog():
         assert db_thread_1.db.hlen(V_STANDARD_HASH_TABLE) == 3
         assert db_thread_1.db.scard(V_CREATED_SET_TABLE) == 0
         assert db_thread_1.db.scard(V_MODIFIED_SET_TABLE) == 1
+
+    def test_archive_and_moving(self, dir_watcher: Tuple[  # pylint: disable=W0621
+            DbThread, DirWatchDog, int, List[Dict], Path]):
+        """Send archive and pending_move command to db thread.
+        It should work as expected.
+        """
+        db_thread_1: DbThread = dir_watcher[0]
+        db_thread_1.start()
+        test_path = dir_watcher[4]
+
+        dir_watch_dog = dir_watcher[1]
+        dir_watch_dog.watch()
+        # create a new file.
+        time.sleep(0.2)
+        test_path.joinpath('x.txt').write_text('hello')
+        time.sleep(1)
+        db_thread_1.que.put(ControllAction.ArchiveChange)
+        time.sleep(1)
+        assert len(db_thread_1.get_archives()) == 1
+        db_thread_1.que.put(ControllAction.PendingMove)
+        time.sleep(1)
+        assert not db_thread_1.get_archives()
+        assert len(db_thread_1.get_pending_archives()) == 1

@@ -2,12 +2,12 @@ from typing import Set, Tuple, Union, List
 
 from .constants import VEDIS_FILE, V_CREATED_SET_TABLE, V_DELETED_SET_TABLE, \
     V_INCREMENT_KEY, V_MODIFIED_SET_TABLE, V_STANDARD_HASH_TABLE, \
-    Z_CHANGED_FOLDER, LOCK_FILE_NAME
+    Z_CHANGED_FOLDER, LOCK_FILE_NAME, PENDING_FOLDER_NAME
 from .dir_watcher.watch_values import FileChange, decode_file_change, \
     encode_file_change
 from filelock import FileLock
 from flask import current_app, g
-from my_scheduler import ControllAction
+from .my_scheduler import ControllAction
 from vedis import Vedis
 
 import logging
@@ -37,15 +37,19 @@ class DbThread(threading.Thread):
         super().__init__(**kwargs)
         self.db = Vedis(db_file)
         self.que: Queue = que
-        self.change_folder: Path
+        self.change_folder_path: Path
         if isinstance(change_folder, str):
-            self.change_folder = Path(change_folder)
+            self.change_folder_path = Path(change_folder)
         else:
-            self.change_folder = change_folder
+            self.change_folder_path = change_folder
 
-        if not self.change_folder.exists():
-            self.change_folder.mkdir()
-        self.lock_file_path = self.change_folder.joinpath(LOCK_FILE_NAME)
+        if not self.change_folder_path.exists():
+            self.change_folder_path.mkdir()
+        self.lock_file_path = self.change_folder_path.joinpath(LOCK_FILE_NAME)
+        self.pending_folder_path = self.change_folder_path.joinpath(PENDING_FOLDER_NAME)
+
+        if not self.pending_folder_path.exists():
+            self.pending_folder_path.mkdir()
 
         if self.lock_file_path.exists():
             self.lock_file_path.unlink()
@@ -112,7 +116,19 @@ class DbThread(threading.Thread):
         except Exception as e:  # pylint: disable=W0703
             logging.error(e, exc_info=True)
 
-    def process_action(self, action: ControllAction):
+    def get_archives(self) -> List[Path]:
+        return dir_util.list_dir_order_by_digits(self.change_folder_path)
+
+    def get_pending_archives(self) -> List[Path]:
+        return list(self.pending_folder_path.iterdir())
+
+    def process_pending_move(self):
+        with FileLock(self.lock_file_path):
+            for fp in self.get_archives():
+                target_path = self.pending_folder_path.joinpath(fp.name)
+                fp.rename(target_path)
+
+    def process_archive_action(self):
         """We do archive job in specified intervals.
         Does it necessary to create a new zip file on every trigger?
         We get the max file name under the folder, check it's length,
@@ -122,35 +138,31 @@ class DbThread(threading.Thread):
         The archive interval should small than move interval, the min of two
         if the data protect window.
         """
-        if action == ControllAction.ArchiveChange:
-            with FileLock(self.lock_file_path):
-                with self.db.transaction():
-                    all_changed_file_names: Set[str] = self.db.Set(
-                        V_MODIFIED_SET_TABLE)
-                    if all_changed_file_names:
-                        files: List[Path] = dir_util.list_dir_order_by_digits(self.change_folder)
-                        if files:
-                            zip_file_path = files[-1]
-                        else:
-                            zip_file_path = self.change_folder.joinpath(
-                                "%s.zip" % self.db.incr(V_INCREMENT_KEY))
-                        while True:
-                            file_name = all_changed_file_names.pop()
-                            if file_name is None:
-                                break
-                            if isinstance(file_name, bytes):
-                                file_name_str = file_name.decode()
-                            with ZipFile(zip_file_path, mode='a') as zip_file:
-                                try:
-                                    zip_file.write(file_name_str)
-                                except TypeError as te:
-                                    logging.error(te, exc_info=True)
-                                except OSError as oe:
-                                    logging.error(oe, exc_info=True)
-                    self.db.commit()
-        else:
-            logging.error("unknown action: %s receive in db_thread.", action)
-            traceback.print_stack()
+        with FileLock(self.lock_file_path):
+            with self.db.transaction():
+                all_changed_file_names: Set[str] = self.db.Set(
+                    V_MODIFIED_SET_TABLE)
+                if all_changed_file_names:
+                    files: List[Path] = self.get_archives()
+                    if files:
+                        zip_file_path = files[-1]
+                    else:
+                        zip_file_path = self.change_folder_path.joinpath(
+                            "%s.zip" % self.db.incr(V_INCREMENT_KEY))
+                    while True:
+                        file_name = all_changed_file_names.pop()
+                        if file_name is None:
+                            break
+                        if isinstance(file_name, bytes):
+                            file_name_str = file_name.decode()
+                        with ZipFile(zip_file_path, mode='a') as zip_file:
+                            try:
+                                zip_file.write(file_name_str)
+                            except TypeError as te:
+                                logging.error(te, exc_info=True)
+                            except OSError as oe:
+                                logging.error(oe, exc_info=True)
+                self.db.commit()
 
     def run(self):
         """Entry point.
@@ -167,7 +179,13 @@ class DbThread(threading.Thread):
             elif isinstance(item, Path):
                 self.insert_standard(item)
             elif isinstance(item, ControllAction):
-                self.process_action(item)
+                if item == ControllAction.ArchiveChange:
+                    self.process_archive_action()
+                elif item == ControllAction.PendingMove:
+                    self.process_pending_move()
+                else:
+                    logging.error("unknown action: %s receive in db_thread.", item)
+                    traceback.print_stack()
             else:
                 logging.error(
                     "unknown data: %s receive in db_thread.", type(item))
