@@ -4,28 +4,27 @@
 # https://www.tutorialspoint.com/python/python_lists.htm
 # https://www.python-course.eu/lambda.php
 
+import os
+from typing import AnyStr, Dict, Iterable, List, NamedTuple, Text, Union
+
+import psutil
+from flask import json
+from yaml import Dumper, Loader, dump, load
+
 import base64
 import codecs
 import hashlib
 import io
-import os
 import re
 import shutil
 import subprocess
 import tempfile
 import urllib.request
 from functools import partial
+from global_static import Configuration, LINE_END, LINE_START, PyGlobal, \
+    Software
 from pathlib import Path
-from typing import AnyStr, Iterable, List, NamedTuple, Text, Union
-
-from yaml import load, dump
-from yaml import Loader, Dumper
-
-import psutil
-from flask import json
-
-from wfc.global_static import BorgConfiguration, \
-    Configuration, PyGlobal, LINE_START, LINE_END
+from wfc.global_static import Software
 
 
 def split_url(url: str, parent: bool = False) -> str:
@@ -47,23 +46,22 @@ def split_url(url: str, parent: bool = False) -> str:
         return after_protocol[idx+1:]
 
 
-def get_software_package_path(software_name=None) -> Path:
-    pd = PyGlobal.configuration.package_dir
+def get_software_package_path(package_dir: Path, softwares: List[Software], software_name=None) -> Path:
     if not software_name:
-        software = PyGlobal.configuration.softwares[0]
+        software = softwares[0]
         if not software.LocalName:
             software_name = split_url(software.PackageUrl)
         else:
             software_name = software.LocalName
-    return os.path.join(pd, software_name)
+    return package_dir.joinpath(software_name)
 
 
-def get_software_packages(target_dir, softwares):
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+def get_software_packages(target_dir: Path, softwares: List[Software]):
+    if not target_dir.exists():
+        target_dir.mkdir(parents=True)
     for software in softwares:
-        url = software['PackageUrl']
-        ln = software['LocalName']
+        url = software.PackageUrl
+        ln = software.LocalName
         if not ln:
             ln = split_url(url, False)
         lf = os.path.join(target_dir, ln)
@@ -103,15 +101,16 @@ def get_configuration_yml(config_file: Union[str, Path], encoding="utf-8") -> Co
         raise ValueError("config file %s doesn't exists." % config_file)
 
     with io.open(config_path, mode='r', encoding=encoding) as y_stream:
-        return load(y_stream, Loader=Loader)
+        return Configuration(load(y_stream, Loader=Loader))
 
-def get_configration(config_file: str, encoding="utf-8") -> Configuration:
+
+def get_configration(config_file: str, encoding="utf-8") -> dict:
     """Get Configuration object."""
     cfp = Path(config_file)
     if cfp.is_file() and cfp.exists():
         content = get_filecontent_str(cfp, encoding=encoding)
         j = json.loads(content)
-        PyGlobal.configuration = BorgConfiguration(j)
+        # PyGlobal.configuration = BorgConfiguration(j)
         return j
     raise ValueError("config file %s doesn't exists." % config_file)
 
@@ -286,15 +285,10 @@ def get_file_frombase64(base64_str, out_file: str = None) -> Path:
         return tp
 
 
-def un_protect_password_by_openssl_publickey(base64_str, private_key=None, openssl=None) -> AnyStr:
+def un_protect_password_by_openssl_publickey(base64_str, openssl, private_key) -> AnyStr:
     in_file = get_file_frombase64(base64_str)
     tf = tempfile.TemporaryFile()
     tf.close()
-
-    if openssl is None:
-        openssl = PyGlobal.configuration.json['openssl']
-    if private_key is None:
-        private_key = PyGlobal.configuration.json['ServerPrivateKeyFile']
     subprocess.call([openssl, 'pkeyutl', '-decrypt', '-inkey',
                      private_key, '-in', in_file, '-out', tf.name])
     tp = Path(tf.name)

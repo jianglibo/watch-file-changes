@@ -14,23 +14,21 @@ Software = NamedTuple(
 class Configuration:
     'A Wrapper for json configuration'
 
-    def __init__(self, json):
-        self.json = json
-        self.my_os = json["OsType"]
-        self.by_os_config = json['SwitchByOs'][self.my_os]
-        self.server_side = self.by_os_config['ServerSide']
-        self.package_dir = self.server_side['PackageDir']
+    def __init__(self, dict_like: dict):
+        self.dict_like: dict = dict_like
+        self.my_os = dict_like["OsType"]
+        self.package_dir = Path(self.dict_like['PackageDir'])
         self.softwares: List[Software] = [Software(
-            s['PackageUrl'], s['LocalName']) for s in self.by_os_config['Softwares']]
+            s['PackageUrl'], s['LocalName']) for s in self.dict_like['Softwares']]
 
     def get_property(self, pn):
-        return self.json[pn]
+        return self.dict_like[pn]
 
     def get_property_if_need(self, v, pn):
         if v:
             return v
         else:
-            return self.json[pn]
+            return self.dict_like[pn]
 
 
 class BorgConfiguration(Configuration):
@@ -46,8 +44,8 @@ LINE_END: Final = "for-easyinstaller-client-use-end"
 EMPTY_PASSWORD: Final = "USE-EMPTY-PASSWORD"
 
 class PyGlobal:
-    """Holde global variablse."""
-    configuration: Configuration
+    """Hold global variables."""
+    # configuration: Configuration
     config_file = None
     mysql_extrafile = None
     verbose = False

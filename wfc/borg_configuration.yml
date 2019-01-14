@@ -21,6 +21,7 @@ ServerPassword: null
 OsType: centos
 LogDir: e:/backups/logs
 BorgBin: /usr/local/bin/borg
+BorgInit: "%s init --encryption=none %s"
 BorgCreate: '%s create --stats --json %s::%s /etc /usr/local/bin'
 BorgPrune: '%s prune -v --list --keep-daily=7 --keep-weekly=4 %s'
 BorgList: '%s list --json %s'
@@ -42,24 +43,19 @@ crons:
   prune: 3 33 1 ? * SAT *
   backuplocal: 3 * * ? * * *
 BorgPrunePattern: 0 3 0 3 0 0 2
-SwitchByOs:
-  centos:
-    Softwares:
-      - PackageUrl: https://github.com/borgbackup/borg/releases/download/1.1.7/borg-linux64
-        LocalName:
-        InstallDetect:
-          command: yum list installed | Where-Object {$_ -match 'mysql57-community-release.noarch'}
-          expect: aru
-          unexpect:
-        Install:
-          command: yum --nogpgcheck -y localinstall {filepath}
-    ServerSide:
-      UninstallCommand: yum remove -y (Invoke-Expression -Command '& yum list installed' | ForEach-Object {$_ -split '\\s+' | Select-Object -First 1 }| Where-Object {$PSItem -like '*mysql*server.x86_64'})
-      ScriptDir: /tmp/easyinstaller-scripts/borg
-      PackageDir: /tmp/easyinstaller-scripts/packages
-      EntryPoint: borg_server_side.py
-      Software:
-        InstallDetect:
-          command: systemctl status mysqld
-          expect:
-          unexpect: not-found
+Softwares:
+  - PackageUrl: https://github.com/borgbackup/borg/releases/download/1.1.7/borg-linux64
+    LocalName:
+    InstallDetect:
+      command: yum list installed | Where-Object {$_ -match 'mysql57-community-release.noarch'}
+      expect: aru
+      unexpect:
+    Install:
+      command: yum --nogpgcheck -y localinstall {filepath}
+UninstallCommand: yum remove -y (Invoke-Expression -Command '& yum list installed' | ForEach-Object {$_ -split '\\s+' | Select-Object -First 1 }| Where-Object {$PSItem -like '*mysql*server.x86_64'})
+PackageDir: /tmp/easyinstaller-scripts/packages
+Software:
+  InstallDetect:
+    command: systemctl status mysqld
+    expect:
+    unexpect: not-found

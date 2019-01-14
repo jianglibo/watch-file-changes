@@ -10,7 +10,7 @@ class TestYaml():
             data = load(y_stream, Loader=Loader)
 
         assert isinstance(data, dict)
-        assert isinstance(data.get('ServerSideFileList'), list)
+        assert isinstance(data.get('Softwares'), list)
         assert isinstance(data.get('taskcmd'), dict)
         assert isinstance(data.get('coreNumber'), int)
         assert isinstance(data.get('mem'), str)

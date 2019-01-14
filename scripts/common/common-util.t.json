@@ -1,0 +1,7 @@
+{
+    "ServerPrivateKeyFile": "c:/users/admin/id_rsa",
+    "ServerPublicKeyFile": "c:/users/admin/public_key.pem",
+    "HostName": "192.168.33.110",
+    "SshPort": 22,
+    "ifile": "c:/users/admin/id_rsa"
+}

@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from . import shared_fort
-from wfc.dir_watcher.global_static import BorgConfiguration, PyGlobal
-from wfc.dir_watcher import common_util
+from wfc.global_static import BorgConfiguration, PyGlobal
+from wfc import common_util
 
 
 def two_add(a, b, c=6):
@@ -95,4 +95,4 @@ class TestCommonUtil(object):
         f = Path(__file__).joinpath('..', '..', 'mysql', 'fixtures', 'abc.xml')
         s = common_util.get_filecontent_str(f)
         rows = [(x[0].text, x[1].text) for x in ET.fromstring(s)]
-        assert len(rows) > 0
+        assert rows

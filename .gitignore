@@ -119,3 +119,7 @@ testing.py
 config/development.py
 config/production.py
 .idea/
+
+**/*.1.json
+# Vagrantfile
+.vagrant/
