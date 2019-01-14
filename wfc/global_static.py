@@ -1,5 +1,6 @@
 from typing import List, NamedTuple, Optional
 from pathlib import Path
+from typing_extensions import Final
 
 
 class MysqlVariableNames:
@@ -33,32 +34,32 @@ class Configuration:
 
 
 class BorgConfiguration(Configuration):
-    'Borg configuration'
-
-    def __init__(self, json):
-        super().__init__(json)
+    """Borg configuration
+    """
 
     def borg_repo_path(self, dv):
         return self.get_property_if_need(dv, "BorgRepoPath")
 
 
+LINE_START: Final = "for-easyinstaller-client-use-start"
+LINE_END: Final = "for-easyinstaller-client-use-end"
+EMPTY_PASSWORD: Final = "USE-EMPTY-PASSWORD"
+
 class PyGlobal:
+    """Holde global variablse."""
     configuration: Configuration
     config_file = None
     mysql_extrafile = None
     verbose = False
-    line_start = "for-easyinstaller-client-use-start"
-    line_end = "for-easyinstaller-client-use-end"
     this_file: Path
     python_dir: Path
     script_dir: Path
     project_dir: Path
     common_dir: Path
-    empty_password = "USE-EMPTY-PASSWORD"
 
 
-PyGlobal.this_file = Path(__file__)
-PyGlobal.python_dir = PyGlobal.this_file.parent
-PyGlobal.script_dir = PyGlobal.python_dir.parent
-PyGlobal.project_dir = PyGlobal.script_dir.parent
-PyGlobal.common_dir = PyGlobal.script_dir.joinpath('common')
+# PyGlobal.this_file = Path(__file__)
+# PyGlobal.python_dir = PyGlobal.this_file.parent
+# PyGlobal.script_dir = PyGlobal.python_dir.parent
+# PyGlobal.project_dir = PyGlobal.script_dir.parent
+# PyGlobal.common_dir = PyGlobal.script_dir.joinpath('common')

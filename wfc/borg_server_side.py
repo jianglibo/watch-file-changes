@@ -1,0 +1,135 @@
+import getopt
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+from global_static import PyGlobal
+
+from . import common_util
+
+PyGlobal.config_file = os.path.join(os.path.split(__file__)[0], 'config.json')
+if os.path.exists(PyGlobal.config_file):
+    common_util.get_configration(PyGlobal.config_file, "utf-8")
+    j_out = PyGlobal.configuration.json
+    repo_path_out = j_out['BorgRepoPath']
+    borg_bin_out = j_out['BorgBin']
+    os_config = PyGlobal.configuration.get_os_config()
+    server_side = os_config["ServerSide"]
+
+
+def usage():
+    print("usage message printed.")
+
+# "ho:" mean -h doesn't need a argument, but -o needs.
+
+
+def main(action, args_ary):
+    if action == 'Archive':
+        common_util.send_lines_to_client(new_borg_archive())
+    elif action == 'Prune':
+        common_util.send_lines_to_client(invoke_prune())
+    elif action == 'InitializeRepo':
+        common_util.send_lines_to_client(init_borg_repo())
+    elif action == 'DownloadPublicKey':
+        common_util.send_lines_to_client(get_openssl_publickey())
+    elif action == 'Install':
+        common_util.send_lines_to_client(install_borg())
+    else:
+        common_util.common_action_handler(action, args_ary)
+
+
+def get_openssl_publickey():
+    openssl_exec = j_out["openssl"]
+    private_key_file = j_out["ServerPrivateKeyFile"]
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        subprocess.call([openssl_exec, 'rsa', '-in',
+                         private_key_file, '-pubout', '-out', tf.name])
+        return tf.name
+
+
+def install_borg():
+    if os.path.exists(borg_bin_out):
+        common_util.send_lines_to_client("AlreadyInstalled")
+    else:
+        common_util.get_software_packages(
+            server_side["PackageDir"], os_config["Softwares"])
+        pk = common_util.get_software_package_path()
+        shutil.copy(pk, borg_bin_out)
+        subprocess.call(['chmod', '755', borg_bin_out])
+        common_util.send_lines_to_client("Install Success.")
+
+
+def new_borg_archive():
+    j = PyGlobal.configuration.json
+    repo_path = j['BorgRepoPath']
+    borg_bin = j['BorgBin']
+    bout = subprocess.check_output([borg_bin, 'list', '--json', repo_path])
+    result_json = json.loads(bout)
+    archives = result_json['archives']
+    if archives:
+        archive_name = str(int(archives[-1]['name']) + 1)
+    else:
+        archive_name = "1"
+    create_cmd = j['BorgCreate'] % (borg_bin, repo_path, archive_name)
+    return subprocess.check_output(create_cmd, shell=True)
+
+
+def invoke_prune():
+    j = PyGlobal.configuration.json
+    repo_path = j['BorgRepoPath']
+    borg_bin = j['BorgBin']
+    prune_cmd = j['BorgPrune'] % (borg_bin, repo_path)
+    subprocess.check_output(prune_cmd, shell=True)
+    list_cmd = j['BorgList'] % (borg_bin, repo_path)
+    return subprocess.check_output(list_cmd, shell=True)
+
+
+def init_borg_repo():
+    # init_cmd = [borg_bin, 'init', '--encryption=none', repo_path]
+    j = PyGlobal.configuration.json
+    borg_init = j['BorgInit']
+    init_cmd = borg_init % (borg_bin_out, repo_path_out)
+    init_cmd = init_cmd.split()
+    try:
+        subprocess.check_output(init_cmd)
+        return 'SUCCESS'
+    except subprocess.CalledProcessError as cpe:
+        return cpe
+
+
+if __name__ == "__main__":
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hv:a:",
+                                   ["help", "action=", "notclean", "verbose"])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(str(err))  # will print something like "option -a not recognized"
+        sys.exit(2)
+    verbose = False
+    clean = True
+    action_main = None
+    for o, a in opts:
+        if o == "-v":
+            verbose = True
+        elif o == '--notclean':
+            clean = False
+        elif o == '--verbose':
+            PyGlobal.verbose = True
+        elif o in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif o in ("--action", '-a'):
+            action_main = a
+        else:
+            assert False, "unhandled option"
+    try:
+        main(action_main, args)
+    except Exception as e:  # pylint: disable=W0703
+        print(type(e))
+        print(e)
+        # print(e.message)
+    finally:
+        pass

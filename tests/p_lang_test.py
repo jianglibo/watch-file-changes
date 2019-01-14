@@ -8,7 +8,7 @@ from typing import NamedTuple, Pattern
 
 import pytest
 
-from wfc.dir_watcher import common_util
+from wfc import common_util
 
 
 def test_var_args():
