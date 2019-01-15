@@ -5,7 +5,7 @@
 # https://www.python-course.eu/lambda.php
 
 import os
-from typing import AnyStr, Dict, Iterable, List, NamedTuple, Text, Union
+from typing import AnyStr, Dict, Iterable, List, NamedTuple, Text, Union, Any
 
 import psutil
 from custom_json_coder import CustomJSONEncoder
@@ -185,7 +185,33 @@ def get_diskfree() -> Iterable[DiskFree]:
     return map(format_result, mps)
 
 
+def parse_pair(pair_str: str, separator=';') -> Dict[str, Any]:
+    """Get a string like below:
+    year=*; month=*; day=1, week=*; day_of_week=*; hour=*; minute=20; second=0
+    """
+    pairs: List[str] = pair_str.split(separator)
+    d: Dict[str, Any] = {}
+    all_digits = re.compile(r'^\d+$')
+    quoted = re.compile(r'^[\'"]{1}(.*)[\'"]{1}$')
+    for pair in pairs:
+        k, v = pair.split('=')
+        k = k.strip()
+        m = quoted.match(k)
+        if m:
+            k = m.group(1)
 
+        v = v.strip()
+        if v.startswith('0') and len(v) > 1:
+            d[k] = v
+        elif all_digits.match(v):
+            d[k] = int(v)
+        else:
+            m = quoted.match(v)
+            if m:
+                d[k] = m.group(1)
+            else:
+                d[k] = v
+    return d
 
 
 def get_memoryfree() -> MemoryFree:
