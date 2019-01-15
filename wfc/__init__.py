@@ -14,6 +14,7 @@ import logging
 import threading
 from queue import Queue
 from wfc import my_scheduler
+from wfc.custom_json_coder import CustomJSONEncoder
 
 
 dictConfig({
@@ -42,23 +43,6 @@ def find_data_file(filename):
         # Change this bit to match where you store your data files:
         datadir = os.path.dirname(__file__)
     return os.path.join(datadir, filename)
-
-
-class CustomJSONEncoder(JSONEncoder):
-
-    def default(self, o):  # pylint: disable=E0202
-        try:
-            if isinstance(o, FileChange):
-                return o.as_dict()
-            if isinstance(o, bytes):
-                bs: bytes = o
-                return bs.decode()
-            iterable = iter(o)
-        except TypeError:
-            pass
-        else:
-            return list(iterable)
-        return JSONEncoder.default(self, o)
 
 
 def create_app(init_vedis=True, init_watch_dog=True, register_vedis=True):

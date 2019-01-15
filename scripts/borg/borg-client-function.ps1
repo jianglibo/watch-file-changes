@@ -7,5 +7,6 @@ function Copy-BorgRepoFiles {
         $configuration = $Global:configuration
     }
     $maxb = Get-MaxLocalDir -configuration $configuration
+    "about to download files from remote: '{0}' to local: '{1}'" -f $configuration.BorgRepoPath, $maxb | Write-Verbose
     Copy-ChangedFiles -RemoteDirectory $configuration.BorgRepoPath -LocalDirectory $maxb -OnlySum:$OnlySum
 }

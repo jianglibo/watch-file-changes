@@ -25,5 +25,6 @@
     "backuplocal": "3 * * ? * * *"
   },
   "BorgPrunePattern": "0 3 0 3 0 0 2",
+  "BorgRepoPath": "/opt/repo",
   "UninstallCommand": "yum remove -y (Invoke-Expression -Command '& yum list installed' | ForEach-Object {$_ -split '\\s+' | Select-Object -First 1 }| Where-Object {$PSItem -like '*mysql*server.x86_64'})"
 }

@@ -8,6 +8,7 @@ import os
 from typing import AnyStr, Dict, Iterable, List, NamedTuple, Text, Union
 
 import psutil
+from custom_json_coder import CustomJSONEncoder
 from flask import json
 from yaml import Dumper, Loader, dump, load
 
@@ -21,10 +22,9 @@ import subprocess
 import tempfile
 import urllib.request
 from functools import partial
-from global_static import Configuration, LINE_END, LINE_START, PyGlobal, \
-    Software
+from global_static import Configuration, LINE_END, LINE_START, Software
 from pathlib import Path
-from wfc.global_static import Software
+from wfc.values import DiskFree, FileHash, MemoryFree
 
 
 def split_url(url: str, parent: bool = False) -> str:
@@ -90,7 +90,6 @@ def get_filecontent_lines(config_file, encoding="utf-8"):
     finally:
         f.close()
 
-
 def get_configuration_yml(config_file: Union[str, Path], encoding="utf-8") -> Configuration:
     config_path: Path
     if isinstance(config_file, str):
@@ -115,15 +114,9 @@ def get_configration(config_file: str, encoding="utf-8") -> dict:
     raise ValueError("config file %s doesn't exists." % config_file)
 
 
-def get_filehashes(files, mode="SHA256"):
+def get_filehashes(files, mode="SHA256") -> List[FileHash]:
     return [get_one_filehash(h, mode) for h in files]
 
-
-class FileHash(NamedTuple):
-    Algorithm: str
-    Hash: str
-    Path: str
-    Length: int
 
 
 def get_one_filehash(file_to_hash: Union[Path, str], mode="SHA256") -> FileHash:
@@ -157,23 +150,17 @@ def get_dir_filehashes(dir_to_hash: Union[Path, str], mode="SHA256") -> List[Fil
     return l
 
 
-def send_lines_to_client(content):
+def send_lines_to_client(content: Union[Dict, str, bytes]):
     print(LINE_START)
-    if isinstance(content, dict):
-        print(json.dumps(content))
-    else:
+    if isinstance(content, str):
         print(content)
+    elif isinstance(content, bytes):
+        print(content.decode())
+    else:
+        value = CustomJSONEncoder().encode(content)
+        # print(json.dumps(content, cls=CustomJSONEncoder))
+        print(value)
     print(LINE_END)
-
-
-class DiskFree(NamedTuple):
-    Name: str
-    Used: int
-    Free: int
-    Percent: str
-    FreeMegabyte: str
-    UsedMegabyte: str
-
 
 def get_diskfree() -> Iterable[DiskFree]:
     """
@@ -198,14 +185,7 @@ def get_diskfree() -> Iterable[DiskFree]:
     return map(format_result, mps)
 
 
-class MemoryFree(NamedTuple):
-    Name: str
-    Used: int
-    Free: int
-    Percent: str
-    FreeMegabyte: str
-    UsedMegabyte: str
-    Total: int
+
 
 
 def get_memoryfree() -> MemoryFree:
@@ -216,7 +196,7 @@ def get_memoryfree() -> MemoryFree:
     percent = str(r.percent) + '%'
     free_megabyte = str(r.free / 1024)
     used_megabyte = str(r.used / 1024)
-    return MemoryFree('', r.used, r.free, percent, free_megabyte, used_megabyte, r.total)
+    return MemoryFree(r.used, r.free, percent, free_megabyte, used_megabyte, r.total)
     # return [{"Name": '', "Used": r.used, "Percent": percent,
     # "Free": r.free, "Freem": freem, "Usedm": usedm, "Total": r.total}]
 

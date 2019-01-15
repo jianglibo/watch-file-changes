@@ -49,7 +49,8 @@ class BorgTaskInvoker():
         else:
             common_util.get_software_packages(self.c.package_dir,
                                               self.c.softwares)
-            pk = common_util.get_software_package_path(self.c.package_dir, self.c.softwares)
+            pk = common_util.get_software_package_path(
+                self.c.package_dir, self.c.softwares)
             shutil.copy(pk, self.borg_bin)
             subprocess.call(['chmod', '755', self.borg_bin])
             common_util.send_lines_to_client("Install Success.")
@@ -81,7 +82,8 @@ class BorgTaskInvoker():
         init_cmd = borg_init % (self.borg_bin, self.repo_path)
         init_cmd = init_cmd.split()
         try:
-            subprocess.check_output(init_cmd)
-            return 'SUCCESS'
+            out_put = subprocess.check_output(init_cmd, stderr=subprocess.STDOUT)
+            return out_put
         except subprocess.CalledProcessError as cpe:
-            return cpe
+            return "%s, %s, %s, %s, %s" % (
+                cpe.cmd, cpe.returncode, cpe.output, cpe.stdout, cpe.stderr)

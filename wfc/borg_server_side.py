@@ -1,13 +1,9 @@
 import sys
-from sys import exc_info
 
 import logging
 
 import getopt
-import pathlib
 from pathlib import Path
-
-
 
 pr = str(Path(__file__).parent.parent.resolve())
 sys.path.append(pr)
@@ -46,7 +42,7 @@ if __name__ == "__main__":
         else:
             assert False, "unhandled option"
     try:
-        file_name = "borg_configuration.yml" 
+        file_name = "borg_configuration.yml"
         project_root = Path(__file__).parent.parent
         config_path = project_root.parent.joinpath(file_name)
 

@@ -87,7 +87,7 @@ else {
             break
         }
         "InitializeRepo" {
-            $r = Invoke-ServerRunningPs1 -Action InitializeRepo -notCombineError
+            $r = Invoke-ServerRunningPs1 -Action InitializeRepo # -notCombineError
             $r | Receive-LinesFromServer
             break
         }
@@ -137,7 +137,7 @@ else {
             break
         }
         "DownloadRepo" {
-            $r = Copy-BorgRepoFiles -LogResult:$LogResult -Json:$Json
+            $r = Copy-BorgRepoFiles
             $r | Write-Verbose
             $r
             break

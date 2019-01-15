@@ -1,21 +1,25 @@
 import os
+
+import pytest
+from . import shared_fort
+from custom_json_coder import CustomJSONEncoder
+
+import json
 import subprocess
 import xml.etree.ElementTree as ET
 from functools import partial
+from global_static import BorgConfiguration, PyGlobal
 from pathlib import Path
-
-import pytest
-
-from . import shared_fort
-from wfc.global_static import BorgConfiguration, PyGlobal
 from wfc import common_util
+from wfc.values import FileHash
 
 
 def two_add(a, b, c=6):
     return a + int(b) + c
 
 
-class TestCommonUtil(object):
+class TestCommonUtil():
+
     def test_split_url(self):
         assert common_util.split_url("http://abc/cc", True) == 'http://abc/'
         assert common_util.split_url("http://abc/cc", False) == 'cc'
@@ -37,7 +41,8 @@ class TestCommonUtil(object):
 
         checked: bool = False
 
-        for current_dir, dirs_under_current_dir, files_under_current_dir in os.walk(PyGlobal.python_dir, topdown=False):
+        for current_dir, dirs_under_current_dir, files_under_current_dir in \
+                os.walk(PyGlobal.python_dir, topdown=False):
             assert isinstance(current_dir, str)
             assert isinstance(dirs_under_current_dir, list)
             assert isinstance(files_under_current_dir, list)
@@ -46,16 +51,26 @@ class TestCommonUtil(object):
 
             if cd.name == 'python':
                 checked = True
-                py_files = [f for f in files_under_current_dir if f.endswith('.py')]
+                py_files = [
+                    f for f in files_under_current_dir if f.endswith('.py')]
                 assert isinstance(py_files[0], str)
                 assert len(py_files) == 5
                 assert len(dirs_under_current_dir) == 1
         assert checked
 
     def test_file_hash(self):
-        f_path = os.path.join(PyGlobal.project_dir, 'ttrap.ps1')
+        f_path = Path(__file__).parent.joinpath('__init__.py')
         ha = common_util.get_one_filehash(f_path, "SHA256")
-        assert ha.Hash == '87AF4543F9A0C5873CDDB280BBA6C6A0E3080888FEDB31D3468BDACCFA9F284B'
+        assert ha.Hash == '0EFFBF25E5B6C5E9C821225AC4E6AB77F0ADED9D0C6AA4597E09193EA882BE04'
+        s1 = CustomJSONEncoder().encode(ha)
+        s = json.dumps(ha, cls=CustomJSONEncoder)
+        assert s == s1
+        jo = json.loads(s)
+        assert isinstance(jo, dict)
+        fh: FileHash = FileHash(**jo)
+
+        assert fh.Hash == '0EFFBF25E5B6C5E9C821225AC4E6AB77F0ADED9D0C6AA4597E09193EA882BE04'
+
 
     def test_config_wrapper(self):
         cf = shared_fort.get_demo_config_file()
