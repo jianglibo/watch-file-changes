@@ -45,15 +45,15 @@ class BorgTaskInvoker():
 
     def install_borg(self):
         if os.path.exists(self.borg_bin):
-            common_util.send_lines_to_client("AlreadyInstalled")
-        else:
-            common_util.get_software_packages(self.c.package_dir,
-                                              self.c.softwares)
-            pk = common_util.get_software_package_path(
-                self.c.package_dir, self.c.softwares)
-            shutil.copy(pk, self.borg_bin)
-            subprocess.call(['chmod', '755', self.borg_bin])
-            common_util.send_lines_to_client("Install Success.")
+            return "AlreadyInstalled"
+
+        common_util.get_software_packages(self.c.package_dir,
+                                          self.c.softwares)
+        pk = common_util.get_software_package_path(
+            self.c.package_dir, self.c.softwares)
+        shutil.copy(pk, self.borg_bin)
+        subprocess.call(['chmod', '755', self.borg_bin])
+        return "Install Success."
 
     def new_borg_archive(self):
         bout = subprocess.check_output(
@@ -82,7 +82,8 @@ class BorgTaskInvoker():
         init_cmd = borg_init % (self.borg_bin, self.repo_path)
         init_cmd = init_cmd.split()
         try:
-            out_put = subprocess.check_output(init_cmd, stderr=subprocess.STDOUT)
+            out_put = subprocess.check_output(
+                init_cmd, stderr=subprocess.STDOUT)
             return out_put
         except subprocess.CalledProcessError as cpe:
             return "%s, %s, %s, %s, %s" % (

@@ -1,10 +1,10 @@
 {
   "AppName": "borg",
-  "ServerEntryPoint": "/vagrant/wfc/borg-server-side.ps1",
+  "ServerEntryPoint": "/vagrant/wfc/borg_server_side.py",
   "ServerExec": "/opt/p3.6env/bin/python",
   "ClientScp": "scp",
   "ClientSsh": "ssh",
-  "HostName": "192.168.33.110",
+  "HostName": "192.168.33.112",
   "SshPort": 22,
   "ServerName": "测试机",
   "UserName": "root",

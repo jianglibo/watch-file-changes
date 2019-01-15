@@ -78,6 +78,10 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
 
+  config.vm.provision "shell", inline: <<-SHELL
+    yum install -y https://centos7.iuscommunity.org/ius-release.rpm gcc
+  SHELL
+
     config.vm.define "centos-watch-file-changes" do |centos|
 	    centos.vm.provider "virtualbox" do |v|
 #    	  v.gui = true
