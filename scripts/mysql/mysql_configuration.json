@@ -1,0 +1,27 @@
+{
+  "AppName": "mysql",
+  "entryPoint": "scripts/mysql/mysql-client-side.ps1",
+  "MysqlVersion": "57",
+  "ClientScp": "scp",
+  "ClientSsh": "ssh",
+  "ServerExec": "python",
+  "HostName": "192.168.33.110",
+  "SshPort": 22,
+  "ServerName": "测试机",
+  "UserName": "root",
+  "IdentityFile": "C:/Users/admin/id_rsa",
+  "ServerPassword": null,
+  "MysqlLogFile": "/var/log/mysqld.log",
+  "LocalDir": "e:/backups/mysql",
+  "LogDir": "e:/backups/logs",
+  "taskcmd": {
+    "flushlog": "%s -Action FlushLogs -ConfigFile %s -LogResult -Json",
+    "dump": "%s -Action Dump -ConfigFile %s -LogResult -Json",
+    "backuplocal": "%s -Action BackupLocal -ConfigFile %s -LogResult -Json"
+  },
+  "crons": {
+    "flushlog": "3 33 12，19 * * ? *",
+    "backuplocal": "3 33 1 ? * SAT *"
+  },
+  "DumpPrunePattern": "0 3 0 3 0 0 0"
+}

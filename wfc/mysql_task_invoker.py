@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Union
 
 from wfc import common_util
-from wfc.global_static import EMPTY_PASSWORD, PyGlobal
+from wfc.global_static import PyGlobal
 
 
 class MysqlTaskInvoker():
@@ -18,11 +18,12 @@ class MysqlTaskInvoker():
     def __init__(self, config_file_path: Union[Path, str]):
         self.c = common_util.get_configuration_yml(config_file_path)
         self.client_bin = self.c.dict_like['ClientBin']
+        self.password = self.c.dict_like['MysqlPassword']
+        self.user = self.c.dict_like['MysqlUser']
+        self.mysql_admin = self.c.dict_like['MysqlAdminBin']
 
     def do_action(self, action: str, args_ary: List[str]):
-        if action == 'MysqlExtraFile':
-            common_util.send_lines_to_client(self.new_mysql_extrafile())
-        elif action == 'FlushLogs':
+        if action == 'FlushLogs':
             common_util.send_lines_to_client(self.invoke_mysql_flushlogs())
         elif action == 'Dump':
             common_util.send_lines_to_client(self.invoke_mysql_dump())
@@ -89,51 +90,19 @@ class MysqlTaskInvoker():
             new_lines.append(line)
         return new_lines
 
-    def new_mysql_extrafile(self, plain_password=None):
-        mysql_user = self.c.dict_like['MysqlUser']
-        if mysql_user is None:
-            raise ValueError(
-                'MysqlUser property in configuration file is empty.')
-        if plain_password:
-            plain_password = plain_password if plain_password != EMPTY_PASSWORD else ''
-            tf = tempfile.mktemp()
-            with io.open(tf, mode='wb') as opened_file:
-                opened_file.writelines([
-                    "%s%s" % (line, "\n") for line in [
-                        "[client]", "user=%s" % mysql_user, 'password="%s"' % plain_password]])
-            return tf
-        else:
-            if PyGlobal.mysql_extrafile is None:
-                plain_password = common_util.un_protect_password_by_openssl_publickey(
-                    self.c.dict_like['MysqlPassword'])
-                tf = tempfile.mktemp()
-                with io.open(tf, mode='wb') as opened_file:
-                    opened_file.writelines([
-                        "%s%s" % (line, "\n") for line in [
-                            "[client]", "user=%s" % mysql_user, 'password="%s"' % plain_password]])
-                PyGlobal.mysql_extrafile = tf
-                return tf
-
-            return PyGlobal.mysql_extrafile
-
-    def get_sql_commandline(self, sql, plain_password):
-        extra_file = self.new_mysql_extrafile(plain_password)
-        cmd_line = [
-            self.c.dict_like['ClientBin'],
-            "--defaults-extra-file=%s" % extra_file,
+    def invoke_mysql_sql_command(self, sql):  # pylint: disable=W0613
+        cmd_array = [
+            self.client_bin,
+            "-u%s" % self.user,
+            "-p%s" % self.password,
             "-X",
             "-e",
             sql
         ]
-        return {"cmd_line": cmd_line, "extrafile": extra_file}
-
-    def invoke_mysql_sql_command(self, sql, plain_password, combine_error=False):  # pylint: disable=W0613
-        cmd_dict = self.get_sql_commandline(sql, plain_password)
-        return common_util.subprocess_checkout_print_error(cmd_dict['cmd_line'])
+        return common_util.subprocess_checkout_print_error(cmd_array)
 
     def get_mysql_variables(self, variable_names=None, plain_password=None):  # pylint: disable=W0613
-        result = self.invoke_mysql_sql_command(
-            'show variables', None, combine_error=True)
+        result = self.invoke_mysql_sql_command('show variables')
         # result may start with some warning words.
         angle_idx = result.index('<')
         if angle_idx > 0:
@@ -151,9 +120,8 @@ class MysqlTaskInvoker():
             result = map(lambda t: {'name': t[0], 'value': t[1]}, result)
             return result
 
-    def flushlogs_filehash(self, plain_password=None):
-        idx_file = self.get_mysql_variables(
-            'log_bin_index', plain_password)['value']
+    def flushlogs_filehash(self):
+        idx_file = self.get_mysql_variables('log_bin_index')['value']
         parent = os.path.split(idx_file)[0]
         with io.open(idx_file, 'rb') as opened_file:
             lines = opened_file.readlines()
@@ -164,24 +132,23 @@ class MysqlTaskInvoker():
                 return common_util.get_one_filehash(ff)
             return map(to_file_desc, lines)
 
-    def invoke_mysql_flushlogs(self, plain_password=None):
-        extra_file = self.new_mysql_extrafile(plain_password)
+    def invoke_mysql_flushlogs(self):
         flush_cmd = [
-            self.c.dict_like['MysqlAdminBin'],
-            "--defaults-extra-file=%s" % extra_file,
+            self.mysql_admin,
+            "-u%s" % self.user,
+            "-p%s" % self.password,
             "flush-logs"
         ]
         return_code = subprocess.call(flush_cmd)
-        # time.sleep(5)
         if PyGlobal.verbose:
             print("invoke_mysql_flushlogs subprocess call return %s" % return_code)
-        return self.flushlogs_filehash(plain_password)
+        return self.flushlogs_filehash()
 
-    def invoke_mysql_dump(self, plain_password=None):
-        extra_file = self.new_mysql_extrafile(plain_password)
+    def invoke_mysql_dump(self):
         dumpfile = self.c.dict_like['DumpFilename']
         dump_cmd = [self.c.dict_like['DumpBin'],
-                    "--defaults-extra-file=%s" % extra_file,
+                    "-u%s" % self.user,
+                    "-p%s" % self.password,
                     '--max_allowed_packet=512M',
                     '--quick',
                     '--events',

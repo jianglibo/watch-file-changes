@@ -1,0 +1,1820 @@
+<?xml version="1.0"?>
+<resultset statement="show variables "
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <row>
+        <field name="Variable_name">auto_increment_increment</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">auto_increment_offset</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">autocommit</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">automatic_sp_privileges</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">avoid_temporal_upgrade</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">back_log</field>
+        <field name="Value">80</field>
+    </row>
+    <row>
+        <field name="Variable_name">basedir</field>
+        <field name="Value">/usr/</field>
+    </row>
+    <row>
+        <field name="Variable_name">big_tables</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">bind_address</field>
+        <field name="Value">*</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_cache_size</field>
+        <field name="Value">32768</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_checksum</field>
+        <field name="Value">CRC32</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_direct_non_transactional_updates</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_error_action</field>
+        <field name="Value">IGNORE_ERROR</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_format</field>
+        <field name="Value">STATEMENT</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_gtid_simple_recovery</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_max_flush_queue_time</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_order_commits</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_row_image</field>
+        <field name="Value">FULL</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_rows_query_log_events</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlog_stmt_cache_size</field>
+        <field name="Value">32768</field>
+    </row>
+    <row>
+        <field name="Variable_name">binlogging_impossible_mode</field>
+        <field name="Value">IGNORE_ERROR</field>
+    </row>
+    <row>
+        <field name="Variable_name">block_encryption_mode</field>
+        <field name="Value">aes-128-ecb</field>
+    </row>
+    <row>
+        <field name="Variable_name">bulk_insert_buffer_size</field>
+        <field name="Value">8388608</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_client</field>
+        <field name="Value">utf8</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_connection</field>
+        <field name="Value">utf8</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_database</field>
+        <field name="Value">latin1</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_filesystem</field>
+        <field name="Value">binary</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_results</field>
+        <field name="Value">utf8</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_server</field>
+        <field name="Value">latin1</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_set_system</field>
+        <field name="Value">utf8</field>
+    </row>
+    <row>
+        <field name="Variable_name">character_sets_dir</field>
+        <field name="Value">/usr/share/mysql/charsets/</field>
+    </row>
+    <row>
+        <field name="Variable_name">collation_connection</field>
+        <field name="Value">utf8_general_ci</field>
+    </row>
+    <row>
+        <field name="Variable_name">collation_database</field>
+        <field name="Value">latin1_swedish_ci</field>
+    </row>
+    <row>
+        <field name="Variable_name">collation_server</field>
+        <field name="Value">latin1_swedish_ci</field>
+    </row>
+    <row>
+        <field name="Variable_name">completion_type</field>
+        <field name="Value">NO_CHAIN</field>
+    </row>
+    <row>
+        <field name="Variable_name">concurrent_insert</field>
+        <field name="Value">AUTO</field>
+    </row>
+    <row>
+        <field name="Variable_name">connect_timeout</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">core_file</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">datadir</field>
+        <field name="Value">/var/lib/mysql/</field>
+    </row>
+    <row>
+        <field name="Variable_name">date_format</field>
+        <field name="Value">%Y-%m-%d</field>
+    </row>
+    <row>
+        <field name="Variable_name">datetime_format</field>
+        <field name="Value">%Y-%m-%d %H:%i:%s</field>
+    </row>
+    <row>
+        <field name="Variable_name">default_storage_engine</field>
+        <field name="Value">InnoDB</field>
+    </row>
+    <row>
+        <field name="Variable_name">default_tmp_storage_engine</field>
+        <field name="Value">InnoDB</field>
+    </row>
+    <row>
+        <field name="Variable_name">default_week_format</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">delay_key_write</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">delayed_insert_limit</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">delayed_insert_timeout</field>
+        <field name="Value">300</field>
+    </row>
+    <row>
+        <field name="Variable_name">delayed_queue_size</field>
+        <field name="Value">1000</field>
+    </row>
+    <row>
+        <field name="Variable_name">disconnect_on_expired_password</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">div_precision_increment</field>
+        <field name="Value">4</field>
+    </row>
+    <row>
+        <field name="Variable_name">end_markers_in_json</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">enforce_gtid_consistency</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">eq_range_index_dive_limit</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">error_count</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">event_scheduler</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">expire_logs_days</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">explicit_defaults_for_timestamp</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">external_user</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">flush</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">flush_time</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">foreign_key_checks</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">ft_boolean_syntax</field>
+        <field name="Value">+ -&gt;&lt;()~*:&quot;&quot;&amp;|</field>
+    </row>
+    <row>
+        <field name="Variable_name">ft_max_word_len</field>
+        <field name="Value">84</field>
+    </row>
+    <row>
+        <field name="Variable_name">ft_min_word_len</field>
+        <field name="Value">4</field>
+    </row>
+    <row>
+        <field name="Variable_name">ft_query_expansion_limit</field>
+        <field name="Value">20</field>
+    </row>
+    <row>
+        <field name="Variable_name">ft_stopword_file</field>
+        <field name="Value">(built-in)</field>
+    </row>
+    <row>
+        <field name="Variable_name">general_log</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">general_log_file</field>
+        <field name="Value">/var/lib/mysql/localhost.log</field>
+    </row>
+    <row>
+        <field name="Variable_name">group_concat_max_len</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">gtid_executed</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">gtid_mode</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">gtid_next</field>
+        <field name="Value">AUTOMATIC</field>
+    </row>
+    <row>
+        <field name="Variable_name">gtid_owned</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">gtid_purged</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">have_compress</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_crypt</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_dynamic_loading</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_geometry</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_openssl</field>
+        <field name="Value">DISABLED</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_profiling</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_query_cache</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_rtree_keys</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_ssl</field>
+        <field name="Value">DISABLED</field>
+    </row>
+    <row>
+        <field name="Variable_name">have_symlink</field>
+        <field name="Value">DISABLED</field>
+    </row>
+    <row>
+        <field name="Variable_name">host_cache_size</field>
+        <field name="Value">279</field>
+    </row>
+    <row>
+        <field name="Variable_name">hostname</field>
+        <field name="Value">localhost.localdomain</field>
+    </row>
+    <row>
+        <field name="Variable_name">identity</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">ignore_builtin_innodb</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">ignore_db_dirs</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">init_connect</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">init_file</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">init_slave</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_adaptive_flushing</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_adaptive_flushing_lwm</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_adaptive_hash_index</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_adaptive_max_sleep_delay</field>
+        <field name="Value">150000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_additional_mem_pool_size</field>
+        <field name="Value">8388608</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_api_bk_commit_interval</field>
+        <field name="Value">5</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_api_disable_rowlock</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_api_enable_binlog</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_api_enable_mdl</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_api_trx_level</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_autoextend_increment</field>
+        <field name="Value">64</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_autoinc_lock_mode</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_dump_at_shutdown</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_dump_now</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_filename</field>
+        <field name="Value">ib_buffer_pool</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_instances</field>
+        <field name="Value">8</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_load_abort</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_load_at_startup</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_load_now</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_buffer_pool_size</field>
+        <field name="Value">134217728</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_change_buffer_max_size</field>
+        <field name="Value">25</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_change_buffering</field>
+        <field name="Value">all</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_checksum_algorithm</field>
+        <field name="Value">innodb</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_checksums</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_cmp_per_index_enabled</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_commit_concurrency</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_compression_failure_threshold_pct</field>
+        <field name="Value">5</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_compression_level</field>
+        <field name="Value">6</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_compression_pad_pct_max</field>
+        <field name="Value">50</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_concurrency_tickets</field>
+        <field name="Value">5000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_data_file_path</field>
+        <field name="Value">ibdata1:12M:autoextend</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_data_home_dir</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_disable_sort_file_cache</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_doublewrite</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_fast_shutdown</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_file_format</field>
+        <field name="Value">Antelope</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_file_format_check</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_file_format_max</field>
+        <field name="Value">Antelope</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_file_per_table</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_flush_log_at_timeout</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_flush_log_at_trx_commit</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_flush_method</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_flush_neighbors</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_flushing_avg_loops</field>
+        <field name="Value">30</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_force_load_corrupted</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_force_recovery</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_aux_table</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_cache_size</field>
+        <field name="Value">8000000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_enable_diag_print</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_enable_stopword</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_max_token_size</field>
+        <field name="Value">84</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_min_token_size</field>
+        <field name="Value">3</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_num_word_optimize</field>
+        <field name="Value">2000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_result_cache_limit</field>
+        <field name="Value">2000000000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_server_stopword_table</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_sort_pll_degree</field>
+        <field name="Value">2</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_total_cache_size</field>
+        <field name="Value">640000000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_ft_user_stopword_table</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_io_capacity</field>
+        <field name="Value">200</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_io_capacity_max</field>
+        <field name="Value">2000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_large_prefix</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_lock_wait_timeout</field>
+        <field name="Value">50</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_locks_unsafe_for_binlog</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_log_buffer_size</field>
+        <field name="Value">8388608</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_log_compressed_pages</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_log_file_size</field>
+        <field name="Value">50331648</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_log_files_in_group</field>
+        <field name="Value">2</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_log_group_home_dir</field>
+        <field name="Value">./</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_lru_scan_depth</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_max_dirty_pages_pct</field>
+        <field name="Value">75</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_max_dirty_pages_pct_lwm</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_max_purge_lag</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_max_purge_lag_delay</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_mirrored_log_groups</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_monitor_disable</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_monitor_enable</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_monitor_reset</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_monitor_reset_all</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_numa_interleave</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_old_blocks_pct</field>
+        <field name="Value">37</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_old_blocks_time</field>
+        <field name="Value">1000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_online_alter_log_max_size</field>
+        <field name="Value">134217728</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_open_files</field>
+        <field name="Value">431</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_optimize_fulltext_only</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_page_size</field>
+        <field name="Value">16384</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_print_all_deadlocks</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_purge_batch_size</field>
+        <field name="Value">300</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_purge_threads</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_random_read_ahead</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_read_ahead_threshold</field>
+        <field name="Value">56</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_read_io_threads</field>
+        <field name="Value">4</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_read_only</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_replication_delay</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_rollback_on_timeout</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_rollback_segments</field>
+        <field name="Value">128</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_sort_buffer_size</field>
+        <field name="Value">1048576</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_spin_wait_delay</field>
+        <field name="Value">6</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_auto_recalc</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_include_delete_marked</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_method</field>
+        <field name="Value">nulls_equal</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_on_metadata</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_persistent</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_persistent_sample_pages</field>
+        <field name="Value">20</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_sample_pages</field>
+        <field name="Value">8</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_stats_transient_sample_pages</field>
+        <field name="Value">8</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_status_output</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_status_output_locks</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_strict_mode</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_support_xa</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_sync_array_size</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_sync_spin_loops</field>
+        <field name="Value">30</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_table_locks</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_thread_concurrency</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_thread_sleep_delay</field>
+        <field name="Value">10000</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_tmpdir</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_undo_directory</field>
+        <field name="Value">.</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_undo_logs</field>
+        <field name="Value">128</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_undo_tablespaces</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_use_native_aio</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_use_sys_malloc</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_version</field>
+        <field name="Value">5.6.41</field>
+    </row>
+    <row>
+        <field name="Variable_name">innodb_write_io_threads</field>
+        <field name="Value">4</field>
+    </row>
+    <row>
+        <field name="Variable_name">insert_id</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">interactive_timeout</field>
+        <field name="Value">28800</field>
+    </row>
+    <row>
+        <field name="Variable_name">join_buffer_size</field>
+        <field name="Value">262144</field>
+    </row>
+    <row>
+        <field name="Variable_name">keep_files_on_create</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">key_buffer_size</field>
+        <field name="Value">8388608</field>
+    </row>
+    <row>
+        <field name="Variable_name">key_cache_age_threshold</field>
+        <field name="Value">300</field>
+    </row>
+    <row>
+        <field name="Variable_name">key_cache_block_size</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">key_cache_division_limit</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">large_files_support</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">large_page_size</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">large_pages</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">last_insert_id</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">lc_messages</field>
+        <field name="Value">en_US</field>
+    </row>
+    <row>
+        <field name="Variable_name">lc_messages_dir</field>
+        <field name="Value">/usr/share/mysql/</field>
+    </row>
+    <row>
+        <field name="Variable_name">lc_time_names</field>
+        <field name="Value">en_US</field>
+    </row>
+    <row>
+        <field name="Variable_name">license</field>
+        <field name="Value">GPL</field>
+    </row>
+    <row>
+        <field name="Variable_name">local_infile</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">lock_wait_timeout</field>
+        <field name="Value">31536000</field>
+    </row>
+    <row>
+        <field name="Variable_name">locked_in_memory</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_bin</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_bin_basename</field>
+        <field name="Value">/var/lib/mysql/hm-log-bin</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_bin_index</field>
+        <field name="Value">/var/lib/mysql/hm-log-bin.index</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_bin_trust_function_creators</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_bin_use_v1_row_events</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_error</field>
+        <field name="Value">/var/log/mysqld.log</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_output</field>
+        <field name="Value">FILE</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_queries_not_using_indexes</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_slave_updates</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_slow_admin_statements</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_slow_slave_statements</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_throttle_queries_not_using_indexes</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">log_warnings</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">long_query_time</field>
+        <field name="Value">10.000000</field>
+    </row>
+    <row>
+        <field name="Variable_name">low_priority_updates</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">lower_case_file_system</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">lower_case_table_names</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">master_info_repository</field>
+        <field name="Value">FILE</field>
+    </row>
+    <row>
+        <field name="Variable_name">master_verify_checksum</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_allowed_packet</field>
+        <field name="Value">4194304</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_binlog_cache_size</field>
+        <field name="Value">18446744073709547520</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_binlog_size</field>
+        <field name="Value">1073741824</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_binlog_stmt_cache_size</field>
+        <field name="Value">18446744073709547520</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_connect_errors</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_connections</field>
+        <field name="Value">151</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_delayed_threads</field>
+        <field name="Value">20</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_digest_length</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_error_count</field>
+        <field name="Value">64</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_heap_table_size</field>
+        <field name="Value">16777216</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_insert_delayed_threads</field>
+        <field name="Value">20</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_join_size</field>
+        <field name="Value">18446744073709551615</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_length_for_sort_data</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_prepared_stmt_count</field>
+        <field name="Value">16382</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_relay_log_size</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_seeks_for_key</field>
+        <field name="Value">18446744073709551615</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_sort_length</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_sp_recursion_depth</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_tmp_tables</field>
+        <field name="Value">32</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_user_connections</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">max_write_lock_count</field>
+        <field name="Value">18446744073709551615</field>
+    </row>
+    <row>
+        <field name="Variable_name">metadata_locks_cache_size</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">metadata_locks_hash_instances</field>
+        <field name="Value">8</field>
+    </row>
+    <row>
+        <field name="Variable_name">min_examined_row_limit</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">multi_range_count</field>
+        <field name="Value">256</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_data_pointer_size</field>
+        <field name="Value">6</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_max_sort_file_size</field>
+        <field name="Value">9223372036853727232</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_mmap_size</field>
+        <field name="Value">18446744073709551615</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_recover_options</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_repair_threads</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_sort_buffer_size</field>
+        <field name="Value">8388608</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_stats_method</field>
+        <field name="Value">nulls_unequal</field>
+    </row>
+    <row>
+        <field name="Variable_name">myisam_use_mmap</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">net_buffer_length</field>
+        <field name="Value">16384</field>
+    </row>
+    <row>
+        <field name="Variable_name">net_read_timeout</field>
+        <field name="Value">30</field>
+    </row>
+    <row>
+        <field name="Variable_name">net_retry_count</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">net_write_timeout</field>
+        <field name="Value">60</field>
+    </row>
+    <row>
+        <field name="Variable_name">new</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">old</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">old_alter_table</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">old_passwords</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">open_files_limit</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_prune_level</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_search_depth</field>
+        <field name="Value">62</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_switch</field>
+        <field name="Value">index_merge=on,index_merge_union=on,index_merge_sort_union=on,index_merge_intersection=on,engine_condition_pushdown=on,index_condition_pushdown=on,mrr=on,mrr_cost_based=on,block_nested_loop=on,batched_key_access=off,materialization=on,semijoin=on,loosescan=on,firstmatch=on,subquery_materialization_cost_based=on,use_index_extensions=on</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_trace</field>
+        <field name="Value">enabled=off,one_line=off</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_trace_features</field>
+        <field name="Value">greedy_search=on,range_optimizer=on,dynamic_range=on,repeated_subselect=on</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_trace_limit</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_trace_max_mem_size</field>
+        <field name="Value">16384</field>
+    </row>
+    <row>
+        <field name="Variable_name">optimizer_trace_offset</field>
+        <field name="Value">-1</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_accounts_size</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_digests_size</field>
+        <field name="Value">5000</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_stages_history_long_size</field>
+        <field name="Value">1000</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_stages_history_size</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_statements_history_long_size</field>
+        <field name="Value">1000</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_statements_history_size</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_waits_history_long_size</field>
+        <field name="Value">1000</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_events_waits_history_size</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_hosts_size</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_cond_classes</field>
+        <field name="Value">80</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_cond_instances</field>
+        <field name="Value">1382</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_digest_length</field>
+        <field name="Value">1024</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_file_classes</field>
+        <field name="Value">50</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_file_handles</field>
+        <field name="Value">32768</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_file_instances</field>
+        <field name="Value">2557</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_mutex_classes</field>
+        <field name="Value">200</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_mutex_instances</field>
+        <field name="Value">5755</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_rwlock_classes</field>
+        <field name="Value">40</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_rwlock_instances</field>
+        <field name="Value">3138</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_socket_classes</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_socket_instances</field>
+        <field name="Value">230</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_stage_classes</field>
+        <field name="Value">150</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_statement_classes</field>
+        <field name="Value">168</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_table_handles</field>
+        <field name="Value">616</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_table_instances</field>
+        <field name="Value">684</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_thread_classes</field>
+        <field name="Value">50</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_max_thread_instances</field>
+        <field name="Value">288</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_session_connect_attrs_size</field>
+        <field name="Value">512</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_setup_actors_size</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_setup_objects_size</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">performance_schema_users_size</field>
+        <field name="Value">100</field>
+    </row>
+    <row>
+        <field name="Variable_name">pid_file</field>
+        <field name="Value">/var/run/mysqld/mysqld.pid</field>
+    </row>
+    <row>
+        <field name="Variable_name">plugin_dir</field>
+        <field name="Value">/usr/lib64/mysql/plugin/</field>
+    </row>
+    <row>
+        <field name="Variable_name">port</field>
+        <field name="Value">3306</field>
+    </row>
+    <row>
+        <field name="Variable_name">preload_buffer_size</field>
+        <field name="Value">32768</field>
+    </row>
+    <row>
+        <field name="Variable_name">profiling</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">profiling_history_size</field>
+        <field name="Value">15</field>
+    </row>
+    <row>
+        <field name="Variable_name">protocol_version</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">proxy_user</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">pseudo_slave_mode</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">pseudo_thread_id</field>
+        <field name="Value">22</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_alloc_block_size</field>
+        <field name="Value">8192</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_cache_limit</field>
+        <field name="Value">1048576</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_cache_min_res_unit</field>
+        <field name="Value">4096</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_cache_size</field>
+        <field name="Value">1048576</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_cache_type</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_cache_wlock_invalidate</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">query_prealloc_size</field>
+        <field name="Value">8192</field>
+    </row>
+    <row>
+        <field name="Variable_name">rand_seed1</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">rand_seed2</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">range_alloc_block_size</field>
+        <field name="Value">4096</field>
+    </row>
+    <row>
+        <field name="Variable_name">read_buffer_size</field>
+        <field name="Value">131072</field>
+    </row>
+    <row>
+        <field name="Variable_name">read_only</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">read_rnd_buffer_size</field>
+        <field name="Value">262144</field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_basename</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_index</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_info_file</field>
+        <field name="Value">relay-log.info</field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_info_repository</field>
+        <field name="Value">FILE</field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_purge</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_recovery</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">relay_log_space_limit</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">report_host</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">report_password</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">report_port</field>
+        <field name="Value">3306</field>
+    </row>
+    <row>
+        <field name="Variable_name">report_user</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">rpl_stop_slave_timeout</field>
+        <field name="Value">31536000</field>
+    </row>
+    <row>
+        <field name="Variable_name">secure_auth</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">secure_file_priv</field>
+        <field name="Value">/var/lib/mysql-files/</field>
+    </row>
+    <row>
+        <field name="Variable_name">server_id</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">server_id_bits</field>
+        <field name="Value">32</field>
+    </row>
+    <row>
+        <field name="Variable_name">server_uuid</field>
+        <field name="Value">0213e4ab-9f47-11e8-ac25-0800272fa1da</field>
+    </row>
+    <row>
+        <field name="Variable_name">show_old_temporals</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">simplified_binlog_gtid_recovery</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">skip_external_locking</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">skip_name_resolve</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">skip_networking</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">skip_show_database</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_allow_batching</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_checkpoint_group</field>
+        <field name="Value">512</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_checkpoint_period</field>
+        <field name="Value">300</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_compressed_protocol</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_exec_mode</field>
+        <field name="Value">STRICT</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_load_tmpdir</field>
+        <field name="Value">/tmp</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_max_allowed_packet</field>
+        <field name="Value">1073741824</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_net_timeout</field>
+        <field name="Value">3600</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_parallel_workers</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_pending_jobs_size_max</field>
+        <field name="Value">16777216</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_rows_search_algorithms</field>
+        <field name="Value">TABLE_SCAN,INDEX_SCAN</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_skip_errors</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_sql_verify_checksum</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_transaction_retries</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">slave_type_conversions</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">slow_launch_time</field>
+        <field name="Value">2</field>
+    </row>
+    <row>
+        <field name="Variable_name">slow_query_log</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">slow_query_log_file</field>
+        <field name="Value">/var/lib/mysql/localhost-slow.log</field>
+    </row>
+    <row>
+        <field name="Variable_name">socket</field>
+        <field name="Value">/var/lib/mysql/mysql.sock</field>
+    </row>
+    <row>
+        <field name="Variable_name">sort_buffer_size</field>
+        <field name="Value">262144</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_auto_is_null</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_big_selects</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_buffer_result</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_log_bin</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_log_off</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_mode</field>
+        <field name="Value">STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_notes</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_quote_show_create</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_safe_updates</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_select_limit</field>
+        <field name="Value">18446744073709551615</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_slave_skip_counter</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">sql_warnings</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_ca</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_capath</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_cert</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_cipher</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_crl</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_crlpath</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">ssl_key</field>
+        <field name="Value"></field>
+    </row>
+    <row>
+        <field name="Variable_name">storage_engine</field>
+        <field name="Value">InnoDB</field>
+    </row>
+    <row>
+        <field name="Variable_name">stored_program_cache</field>
+        <field name="Value">256</field>
+    </row>
+    <row>
+        <field name="Variable_name">sync_binlog</field>
+        <field name="Value">0</field>
+    </row>
+    <row>
+        <field name="Variable_name">sync_frm</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">sync_master_info</field>
+        <field name="Value">10000</field>
+    </row>
+    <row>
+        <field name="Variable_name">sync_relay_log</field>
+        <field name="Value">10000</field>
+    </row>
+    <row>
+        <field name="Variable_name">sync_relay_log_info</field>
+        <field name="Value">10000</field>
+    </row>
+    <row>
+        <field name="Variable_name">system_time_zone</field>
+        <field name="Value">UTC</field>
+    </row>
+    <row>
+        <field name="Variable_name">table_definition_cache</field>
+        <field name="Value">615</field>
+    </row>
+    <row>
+        <field name="Variable_name">table_open_cache</field>
+        <field name="Value">431</field>
+    </row>
+    <row>
+        <field name="Variable_name">table_open_cache_instances</field>
+        <field name="Value">1</field>
+    </row>
+    <row>
+        <field name="Variable_name">thread_cache_size</field>
+        <field name="Value">9</field>
+    </row>
+    <row>
+        <field name="Variable_name">thread_concurrency</field>
+        <field name="Value">10</field>
+    </row>
+    <row>
+        <field name="Variable_name">thread_handling</field>
+        <field name="Value">one-thread-per-connection</field>
+    </row>
+    <row>
+        <field name="Variable_name">thread_stack</field>
+        <field name="Value">262144</field>
+    </row>
+    <row>
+        <field name="Variable_name">time_format</field>
+        <field name="Value">%H:%i:%s</field>
+    </row>
+    <row>
+        <field name="Variable_name">time_zone</field>
+        <field name="Value">SYSTEM</field>
+    </row>
+    <row>
+        <field name="Variable_name">timed_mutexes</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">timestamp</field>
+        <field name="Value">1539265749.666036</field>
+    </row>
+    <row>
+        <field name="Variable_name">tmp_table_size</field>
+        <field name="Value">16777216</field>
+    </row>
+    <row>
+        <field name="Variable_name">tmpdir</field>
+        <field name="Value">/tmp</field>
+    </row>
+    <row>
+        <field name="Variable_name">transaction_alloc_block_size</field>
+        <field name="Value">8192</field>
+    </row>
+    <row>
+        <field name="Variable_name">transaction_allow_batching</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">transaction_prealloc_size</field>
+        <field name="Value">4096</field>
+    </row>
+    <row>
+        <field name="Variable_name">tx_isolation</field>
+        <field name="Value">REPEATABLE-READ</field>
+    </row>
+    <row>
+        <field name="Variable_name">tx_read_only</field>
+        <field name="Value">OFF</field>
+    </row>
+    <row>
+        <field name="Variable_name">unique_checks</field>
+        <field name="Value">ON</field>
+    </row>
+    <row>
+        <field name="Variable_name">updatable_views_with_limit</field>
+        <field name="Value">YES</field>
+    </row>
+    <row>
+        <field name="Variable_name">version</field>
+        <field name="Value">5.6.41-log</field>
+    </row>
+    <row>
+        <field name="Variable_name">version_comment</field>
+        <field name="Value">MySQL Community Server (GPL)</field>
+    </row>
+    <row>
+        <field name="Variable_name">version_compile_machine</field>
+        <field name="Value">x86_64</field>
+    </row>
+    <row>
+        <field name="Variable_name">version_compile_os</field>
+        <field name="Value">Linux</field>
+    </row>
+    <row>
+        <field name="Variable_name">wait_timeout</field>
+        <field name="Value">28800</field>
+    </row>
+    <row>
+        <field name="Variable_name">warning_count</field>
+        <field name="Value">0</field>
+    </row>
+</resultset>

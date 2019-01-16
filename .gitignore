@@ -121,5 +121,6 @@ config/production.py
 .idea/
 
 **/*.1.json
+**/*.1.yml
 # Vagrantfile
 .vagrant/

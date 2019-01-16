@@ -1,0 +1,38 @@
+AppName: "mysql"
+entryPoint: "scripts/mysql/mysql-client-side.ps1"
+MysqlVersion: "57"
+HostName: "192.168.33.110"
+ServerName: "测试机"
+coreNumber: 8
+mem: "8G"
+MysqlUser: "root"
+MysqlPassword: "dkRqLi9JtR>4"
+ClientBin: "mysql"
+DumpBin: "mysqldump"
+DumpFilename: "/tmp/mysqldump.sql"
+MysqlAdminBin: "mysqladmin"
+MysqlLogFile: "/var/log/mysqld.log"
+LocalDir: "e:/backups/mysql"
+LogDir: "e:/backups/logs"
+taskcmd:
+  - flushlog: "%s -Action FlushLogs -ConfigFile %s -LogResult -Json"
+  - dump: "%s -Action Dump -ConfigFile %s -LogResult -Json"
+  - backuplocal: "%s -Action BackupLocal -ConfigFile %s -LogResult -Json"
+crons:
+  - flushlog: "3 33 12，19 * * ? *"
+  - backuplocal: "3 33 1 ? * SAT *"
+DumpPrunePattern: "0 3 0 3 0 0 0"
+StartCommand: "systemctl start mysqld"
+StopCommand: "systemctl stop mysqld"
+RestartCommand: "systemctl restart mysqld"
+StatusCommand: "systemctl status mysqld"
+UninstallCommand: "yum remove -y (Invoke-Expression -Command \u0027\u0026 yum list installed\u0027 | ForEach-Object {$_ -split \u0027\\s+\u0027 | Select-Object -First 1 }| Where-Object {$PSItem -like \u0027*mysql*server.x86_64\u0027})"
+ScriptDir: "/tmp/easyinstaller-scripts/mysql"
+PackageDir: "/tmp/easyinstaller-scripts/packages"
+EntryPoint: "mysql_server_side.py"
+Software:
+  InstallDetect:
+    command: "systemctl status mysqld"
+    expect: ""
+    unexpect: "not-found"
+

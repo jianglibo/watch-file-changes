@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import getopt
-import os
 import sys
 from wfc.mysql_task_invoker import MysqlTaskInvoker
 
@@ -46,7 +45,4 @@ if __name__ == "__main__":
         print(type(e))
         print(e)
     finally:
-        if PyGlobal.mysql_extrafile and clean:
-            if os.path.exists(PyGlobal.mysql_extrafile):
-                os.remove(PyGlobal.mysql_extrafile)
-        PyGlobal.mysql_extrafile = None
+        pass

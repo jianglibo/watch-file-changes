@@ -1,24 +1,11 @@
 AppName: borg
 entryPoint: scripts/borg/borg-client-side.ps1
-ClientScp: scp
-ClientSsh: ssh
-ServerExec: python
-ServerLang: python
-openssl: openssl
-ClientOpenssl: E:\\Program Files\\OpenSSL-Win64\\v1.0.2p\\bin\\openssl.exe
-ClientEnv:
-  OPENSSL_CONF: E:\\Program Files\\OpenSSL-Win64\\v1.0.2p\\bin\\openssl.cfg
 HostName: 192.168.33.110
 SshPort: 22
 ServerName: 测试机
 coreNumber: 8
 mem: 8G
 UserName: root
-IdentityFile: C:/Users/Administrator/192.168.33.110.ifile
-PublicKeyFile: default|none
-PrivateKeyFile: /root/.ssh/id_rsa
-ServerPassword: null
-OsType: centos
 LogDir: e:/backups/logs
 BorgBin: /usr/local/bin/borg
 BorgInit: "%s init --encryption=none %s"
@@ -27,10 +14,6 @@ BorgPrune: '%s prune -v --list --keep-daily=7 --keep-weekly=4 %s'
 BorgList: '%s list --json %s'
 BorgRepoPath: /opt/repo
 LocalDir: e:/backups/borg
-ServerSideFileList:
-  - python/common_util.py
-  - python/global_static.py
-  - borg/borg_server_side.py
 taskcmd:
   archive: '%s -Action ArchiveAndDownload -ConfigFile %s -LogResult -Json'
   prune: '%s -Action PruneAndDownload -ConfigFile %s -LogResult -Json'
