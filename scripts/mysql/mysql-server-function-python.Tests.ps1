@@ -5,7 +5,7 @@ $ScriptDir = $here | Split-Path -Parent
 . "${ScriptDir}\global-variables.ps1"
 
 $sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path) -replace '\.Tests\.', '.'
-. "$here\mysql-server-function.ps1"
+# . "$here\mysql-server-function.ps1"
 
 . "$here\mysql-client-function.ps1"
 

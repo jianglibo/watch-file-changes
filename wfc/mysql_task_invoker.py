@@ -7,6 +7,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import List, Union
 
+
+from itertools import dropwhile, islice
 from wfc import common_util
 from wfc.global_static import PyGlobal
 
@@ -101,7 +103,7 @@ class MysqlTaskInvoker():
         ]
         return common_util.subprocess_checkout_print_error(cmd_array)
 
-    def get_mysql_variables(self, variable_names=None, plain_password=None):  # pylint: disable=W0613
+    def get_mysql_variables(self, variable_names=None):  # pylint: disable=W0613
         result = self.invoke_mysql_sql_command('show variables')
         # result may start with some warning words.
         angle_idx = result.index('<')
@@ -175,20 +177,15 @@ class MysqlTaskInvoker():
 
     def get_mycnf_file(self):
         out = subprocess.check_output([self.client_bin, '--help'])
-        sio = io.StringIO(out)
-        line = sio.readline()
-        found = False
-        result = None
-        while line:
-            line = line.strip()
-            if found:
-                result = line
-                break
-            if "Default options are read from the following files in the given order:" in line:
-                found = True
-            line = sio.readline()
-        sio.close()
+        assert isinstance(out, bytes)
+        lines = re.split(r'[\r\n]+', out.decode())
+        assert isinstance(lines, list)
+        lines = dropwhile(
+            lambda line: "Default options are read from the following" not in line,
+            lines)
+        result = next(islice(lines, 1, None))
         results = result.split()
         for r in results:
             if os.path.exists(r):
                 return r
+        raise ValueError("Cannot find mycnf file.")

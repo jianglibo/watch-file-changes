@@ -16,7 +16,6 @@ class Configuration:
 
     def __init__(self, dict_like: dict):
         self.dict_like: dict = dict_like
-        self.my_os = dict_like["OsType"]
         self.package_dir = Path(self.dict_like['PackageDir'])
         self.softwares: List[Software] = [Software(
             s['PackageUrl'], s['LocalName']) for s in self.dict_like['Softwares']]

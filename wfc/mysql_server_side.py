@@ -2,8 +2,13 @@
 
 import getopt
 import sys
-from wfc.mysql_task_invoker import MysqlTaskInvoker
+import logging
+from pathlib import Path
 
+pr = str(Path(__file__).parent.parent.resolve())
+sys.path.append(pr)
+
+from wfc.mysql_task_invoker import MysqlTaskInvoker
 from wfc.global_static import PyGlobal
 
 def usage():
@@ -39,10 +44,16 @@ if __name__ == "__main__":
     try:
         if action_opt is None:
             raise ValueError('no action.')
-        processor = MysqlTaskInvoker("borg_configuration.yml")
+
+        file_name = "mysql_configuration.yml"
+        project_root = Path(__file__).parent.parent
+        config_path = project_root.parent.joinpath(file_name)
+
+        if not config_path.exists():
+            config_path = project_root.joinpath('wfc', file_name)
+        processor = MysqlTaskInvoker(config_path)
         processor.do_action(action_opt, args)
     except Exception as e:  # pylint: disable=W0703
-        print(type(e))
-        print(e)
+        logging.error(e, exc_info=True)
     finally:
         pass

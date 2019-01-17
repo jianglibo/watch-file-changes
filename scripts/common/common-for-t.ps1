@@ -20,12 +20,13 @@ function Copy-TestPsScriptToServer {
         [Parameter(Mandatory = $false, Position = 1)][string]$ConfigFile
     )
     if (-not $ConfigFile) {
-        $ConfigFile = $HerePath | Join-Path -ChildPath "demo-config.${Lang}.1.json"
+        $ConfigFile = $HerePath | Join-Path -ChildPath "mysql_configuration.1.json"
+        # $ConfigFile = $HerePath | Join-Path -ChildPath "demo-config.${Lang}.1.json"
     }
     # $sflf = $HerePath | Join-Path -ChildPath "serversidefilelist.txt"
     $configuration = Get-Configuration -ConfigFile $ConfigFile
     # Copy-PsScriptToServer -ConfigFile $ConfigFile -ServerSideFileListFile $sflf | Out-Null
-    Copy-PsScriptToServer -ConfigFile $ConfigFile | Out-Null
+    # Copy-PsScriptToServer -ConfigFile $ConfigFile | Out-Null
     # @{ConfigFile=$ConfigFile;configuration=$configuration;ServerSideFileListFile=$sflf}
     @{ConfigFile = $ConfigFile; configuration = $configuration}
 }
@@ -50,6 +51,6 @@ function Get-DemoConfiguration {
         [Parameter(Mandatory = $true, Position = 0)][string]$HerePath,
         [switch]$ServerSide
     )
-    $ConfigFile = $HerePath | Join-Path -ChildPath "demo-config.1.json"
+    $ConfigFile = $HerePath | Join-Path -ChildPath "mysql_configuration.1.json"
     Get-Configuration -ConfigFile $ConfigFile -ServerSide:$ServerSide
 }
