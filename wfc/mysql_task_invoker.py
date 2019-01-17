@@ -1,6 +1,6 @@
 import os
 from itertools import dropwhile, islice
-from typing import List, Union, Optional
+from typing import List, Optional, Tuple, Union, Iterable
 
 import io
 import logging
@@ -10,8 +10,10 @@ import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from wfc import common_util
-from wfc.global_static import PyGlobal, Configuration
+from wfc.global_static import Configuration, PyGlobal
 
+
+IterOfTuple = Iterable[Tuple[Optional[str], Optional[str]]]
 
 class MysqlTaskInvoker():
     """Do mysql tasks.
@@ -99,26 +101,31 @@ class MysqlTaskInvoker():
         cmd_array = [
             self.client_bin,
             "-u%s" % self.user,
-            "-p$mysql_pass",
+            "-p%s" % self.password,
             "-X",
             "-e",
             sql
         ]
-        return common_util.subprocess_checkout_print_error(cmd_array, env=dict(mysql_pass=self.password))
+        alter_env = {
+            **os.environ,
+            "mysql_pass": self.password
+        }
 
-    def get_mysql_variables(self, variable_names: Optional[Union[List[str], str]]= None):  # pylint: disable=W0613
+        return common_util.subprocess_checkout_print_error(cmd_array, env=alter_env)
+
+    def get_mysql_variables(self, variable_names: Union[List[str], str, None] = None):  # pylint: disable=W0613
         result_bytes: bytes = self.invoke_mysql_sql_command('show variables')
-        logging.info(result_bytes)
         assert isinstance(result_bytes, bytes)
-        result: str = result_bytes.decode()  # pylint: disable=E1101
-        # result may start with some warning words.
-        result = ''.join(dropwhile(lambda c: c != '<', result))
-        print(result)
-        rows = [(x[0].text, x[1].text) for x in ET.fromstring(result)]
+        result_str: str = result_bytes.decode()  # pylint: disable=E1101
+        result_str = ''.join(dropwhile(lambda c: c != '<', result_str))
+        rows: IterOfTuple = [
+            (x[0].text, x[1].text) for x in ET.fromstring(result_str)]
         if not variable_names:
             return rows
+        # logging.info(rows)
         if isinstance(variable_names, str):
-            result = filter(lambda x: x[0] == variable_names, rows)
+            result: IterOfTuple = filter(
+                lambda x: x[0] == variable_names, rows)
             if result:
                 return {'name': result[0][0], 'value': result[0][1]}
         else:

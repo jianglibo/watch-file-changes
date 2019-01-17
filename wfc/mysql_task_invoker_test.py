@@ -15,4 +15,5 @@ class TestMysqlInvoker:
         c: Configuration = get_default_config()
         mti: MysqlTaskInvoker = MysqlTaskInvoker(c)
         assert "mysql.exe" in mti.client_bin
-        mti.get_mysql_variables('datadir')
+        assert "123456>4" == mti.password
+        assert 'aa' == mti.get_mysql_variables('datadir')
