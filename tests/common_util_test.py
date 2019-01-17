@@ -2,13 +2,13 @@ import os
 
 import pytest
 from . import shared_fort
-from custom_json_coder import CustomJSONEncoder
+from wfc.custom_json_coder import CustomJSONEncoder
 
 import json
 import subprocess
 import xml.etree.ElementTree as ET
 from functools import partial
-from global_static import BorgConfiguration, PyGlobal
+from wfc.global_static import BorgConfiguration, PyGlobal
 from pathlib import Path
 from wfc import common_util
 from wfc.values import FileHash

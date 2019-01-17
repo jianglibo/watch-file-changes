@@ -1,24 +1,27 @@
-import io
 import os
+from itertools import dropwhile, islice
+from typing import List, Union, Optional
+
+import io
+import logging
 import re
 import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import List, Union
-
-
-from itertools import dropwhile, islice
 from wfc import common_util
-from wfc.global_static import PyGlobal
+from wfc.global_static import PyGlobal, Configuration
 
 
 class MysqlTaskInvoker():
     """Do mysql tasks.
     """
 
-    def __init__(self, config_file_path: Union[Path, str]):
-        self.c = common_util.get_configuration_yml(config_file_path)
+    def __init__(self, config_file_path: Union[Path, str, Configuration]):
+        if isinstance(config_file_path, Configuration):
+            self.c = config_file_path
+        else:
+            self.c = common_util.get_configuration_yml(config_file_path)
         self.client_bin = self.c.dict_like['ClientBin']
         self.password = self.c.dict_like['MysqlPassword']
         self.user = self.c.dict_like['MysqlUser']
@@ -92,25 +95,26 @@ class MysqlTaskInvoker():
             new_lines.append(line)
         return new_lines
 
-    def invoke_mysql_sql_command(self, sql):  # pylint: disable=W0613
+    def invoke_mysql_sql_command(self, sql) -> bytes:  # pylint: disable=W0613
         cmd_array = [
             self.client_bin,
             "-u%s" % self.user,
-            "-p%s" % self.password,
+            "-p$mysql_pass",
             "-X",
             "-e",
             sql
         ]
-        return common_util.subprocess_checkout_print_error(cmd_array)
+        return common_util.subprocess_checkout_print_error(cmd_array, env=dict(mysql_pass=self.password))
 
-    def get_mysql_variables(self, variable_names=None):  # pylint: disable=W0613
-        result = self.invoke_mysql_sql_command('show variables')
+    def get_mysql_variables(self, variable_names: Optional[Union[List[str], str]]= None):  # pylint: disable=W0613
+        result_bytes: bytes = self.invoke_mysql_sql_command('show variables')
+        logging.info(result_bytes)
+        assert isinstance(result_bytes, bytes)
+        result: str = result_bytes.decode()  # pylint: disable=E1101
         # result may start with some warning words.
-        angle_idx = result.index('<')
-        if angle_idx > 0:
-            result = result[angle_idx:]
-        rows = [(x[0].text, x[1].text) for x in ET.fromstring(
-            result)]  # tuple (auto_increment_increment, 1)
+        result = ''.join(dropwhile(lambda c: c != '<', result))
+        print(result)
+        rows = [(x[0].text, x[1].text) for x in ET.fromstring(result)]
         if not variable_names:
             return rows
         if isinstance(variable_names, str):

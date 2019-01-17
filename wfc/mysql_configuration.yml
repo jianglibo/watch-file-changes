@@ -1,7 +1,5 @@
 AppName: "mysql"
-entryPoint: "scripts/mysql/mysql-client-side.ps1"
 MysqlVersion: "57"
-HostName: "192.168.33.110"
 ServerName: "测试机"
 coreNumber: 8
 mem: "8G"

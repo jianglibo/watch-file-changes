@@ -8,7 +8,7 @@ import os
 from typing import AnyStr, Dict, Iterable, List, NamedTuple, Text, Union, Any
 
 import psutil
-from custom_json_coder import CustomJSONEncoder
+from wfc.custom_json_coder import CustomJSONEncoder
 from flask import json
 from yaml import Dumper, Loader, dump, load
 
@@ -22,7 +22,7 @@ import subprocess
 import tempfile
 import urllib.request
 from functools import partial
-from global_static import Configuration, LINE_END, LINE_START, Software
+from wfc.global_static import Configuration, LINE_END, LINE_START, Software
 from pathlib import Path
 from wfc.values import DiskFree, FileHash, MemoryFree
 
@@ -385,11 +385,16 @@ def update_block_config_file(path_or_lines, key, value=None, block_name="mysqld"
     return block_before
 
 
-def subprocess_checkout_print_error(cmd_list, shell=False):
+def subprocess_checkout_print_error(cmd_list, env: Dict[str, str] = None, shell=False) -> bytes:
     try:
-        return subprocess.check_output(cmd_list, stderr=subprocess.STDOUT, shell=shell)
+        value = subprocess.run(cmd_list, env=env, check=True, stdout=subprocess.PIPE, shell=shell).stdout
+        # value = subprocess.check_output(cmd_list, env=env, stderr=subprocess.STDOUT, shell=shell)
+        return value
     except subprocess.CalledProcessError as cpe:
         print(cpe)
+        # print(cpe.stderr)
+        # print(cpe.stdout)
+        # print('................')
         return cpe.output
 
 

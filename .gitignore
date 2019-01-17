@@ -122,5 +122,7 @@ config/production.py
 
 **/*.1.json
 **/*.1.yml
+**/*.2.json
+**/*.2.yml
 # Vagrantfile
 .vagrant/
