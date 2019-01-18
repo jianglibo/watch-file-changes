@@ -102,24 +102,25 @@ class MysqlTaskInvoker():
 
     def invoke_mysql_sql_command(self, sql) -> str:  # pylint: disable=W0613
         if 'nux' in sys.platform:
-            pass_var = '$mysql_pass'
+            pass_field = f'-p{self.password}'
         else:
-            pass_var = '%mysql_pass%'
+            pass_var = f'"-p{self.password}"'
         cmd_array = [
             self.client_bin,
-            "-u%s" % self.user,
-            pass_var,
+            f"-u{self.user}",
+            pass_field,
             "-X",
             "-e",
             sql
         ]
         # os.environ is a must.
-        alter_env = {
-            **os.environ,
-            "mysql_pass": f'"-p{self.password}"'
-        }
+        # alter_env = {
+        #     **os.environ,
+        #     "mysql_pass": f'"-p{self.password}"'
+        # }
 
-        return common_util.subprocess_checkout_print_error(cmd_array, env=alter_env, shell=True)
+        # return common_util.subprocess_checkout_print_error(cmd_array, env=alter_env, shell=True)
+        return common_util.subprocess_checkout_print_error(cmd_array)
 
     def get_mysql_variables(self,
                             variable_names: Union[List[str], str, None] = None) -> Dict[str, str]:  # pylint: disable=W0613

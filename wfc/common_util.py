@@ -387,7 +387,7 @@ def update_block_config_file(path_or_lines, key, value=None, block_name="mysqld"
 
 
 def subprocess_checkout_print_error(cmd_list: List[str], env: Dict[str, str] = None, shell=False) -> str:
-    assert Path(cmd_list[0]).exists()
+    # assert Path(cmd_list[0]).exists()
     return subprocess.run(cmd_list,
                             env=env,
                             check=True,
