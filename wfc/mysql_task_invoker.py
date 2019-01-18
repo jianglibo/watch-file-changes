@@ -101,14 +101,15 @@ class MysqlTaskInvoker():
         return new_lines
 
     def invoke_mysql_sql_command(self, sql) -> str:  # pylint: disable=W0613
-        if 'nux' in sys.platform:
-            pass_field = f'-p{self.password}'
-        else:
-            pass_var = f'"-p{self.password}"'
+        # if 'nux' in sys.platform:
+        #     pass_field = f'-p{self.password}'
+        # else:
+        #     # pass_field = f'"-p{self.password}"'
+        #     pass_field = f'-p{self.password}'
         cmd_array = [
             self.client_bin,
             f"-u{self.user}",
-            pass_field,
+            f"-p{self.password}",
             "-X",
             "-e",
             sql

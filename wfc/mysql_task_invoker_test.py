@@ -14,7 +14,6 @@ def get_default_config() -> Configuration:
 
 # set password for 用户名@localhost = password('新密码');
 
-
 class TestMysqlInvoker:
 
     # def test_escape(self):
