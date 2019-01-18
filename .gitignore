@@ -113,7 +113,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-.vscode/*
+.vscode/**
 .vscode/
 testing.py
 config/development.py
@@ -126,3 +126,4 @@ config/production.py
 **/*.2.yml
 # Vagrantfile
 .vagrant/
+.vscode/settings.json

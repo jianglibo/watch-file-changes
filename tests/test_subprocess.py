@@ -1,26 +1,45 @@
 import subprocess
 import os
+import pytest
 
 
 class TestSubprocesses:
     def test_shell_true(self):
-        cp = subprocess.run(['echo', '%HOME%'], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, check=True)
+        # because echoe is a built in command.
+        with pytest.raises(FileNotFoundError):
+            cp = subprocess.run(['echo', '%path%'],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, check=True)
+
+        cp = subprocess.run(['echo', '%path%'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, check=True,
+                            shell=True)
         assert cp.returncode == 0
+        # universal_newlines wasn't setted.
         assert isinstance(cp.stdout, bytes)
-        cp = subprocess.run(['echo', '%HOME%'], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, check=True, universal_newlines=True)
+
+        cp = subprocess.run(['echo', '%path%'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            check=True,
+                            shell=True,
+                            universal_newlines=True)
         assert isinstance(cp.stdout, str)
-        assert 'HOME' in cp.stdout
+        assert '%path%' not in cp.stdout
 
         new_env = {
-            **os.environ
+            **os.environ,
+            "HOME": "E:"
         }
 
-        try:
-            cp = subprocess.run(['dir', '%HOME%'], stdout=subprocess.PIPE, env=new_env,
-                                stderr=subprocess.PIPE, check=True, universal_newlines=True, shell=True)
-        except subprocess.CalledProcessError as err:
-            print(err)
 
-        assert 'HOME' not in cp.stdout
+        cp = subprocess.run(['echo', '%HOME%'],
+                            stdout=subprocess.PIPE,
+                            env=new_env,
+                            stderr=subprocess.PIPE,
+                            check=True,
+                            universal_newlines=True,
+                            shell=True)
+
+        assert 'E:' == cp.stdout.strip()

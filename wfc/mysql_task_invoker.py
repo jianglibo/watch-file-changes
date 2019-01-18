@@ -1,4 +1,5 @@
 import os
+import sys
 from itertools import dropwhile, islice
 from typing import List, Optional, Tuple, Union, Iterable, Dict
 
@@ -99,48 +100,44 @@ class MysqlTaskInvoker():
             new_lines.append(line)
         return new_lines
 
-    def invoke_mysql_sql_command(self, sql) -> bytes:  # pylint: disable=W0613
+    def invoke_mysql_sql_command(self, sql) -> str:  # pylint: disable=W0613
+        if 'nux' in sys.platform:
+            pass_var = '$mysql_pass'
+        else:
+            pass_var = '%mysql_pass%'
         cmd_array = [
             self.client_bin,
             "-u%s" % self.user,
-            "-p%s" % self.password,
+            pass_var,
             "-X",
             "-e",
             sql
         ]
+        # os.environ is a must.
         alter_env = {
             **os.environ,
-            "mysql_pass": self.password
+            "mysql_pass": f'"-p{self.password}"'
         }
 
-        return common_util.subprocess_checkout_print_error(cmd_array, env=alter_env)
+        return common_util.subprocess_checkout_print_error(cmd_array, env=alter_env, shell=True)
 
     def get_mysql_variables(self,
                             variable_names: Union[List[str], str, None] = None) -> Dict[str, str]:  # pylint: disable=W0613
-        result_bytes: bytes = self.invoke_mysql_sql_command('show variables')
-        assert isinstance(result_bytes, bytes)
-        result_str: str = result_bytes.decode()  # pylint: disable=E1101
+        variable_names_list: List[str]
+        if variable_names is None:
+            variable_names_list = []
+        elif isinstance(variable_names, str):
+            variable_names_list = [variable_names]
+        else:
+            variable_names_list = variable_names
+
+        result_str: str = self.invoke_mysql_sql_command('show variables')
+        # assert isinstance(result_bytes, str)
+        # result_str: str = result_bytes.decode()  # pylint: disable=E1101
         result_str = ''.join(dropwhile(lambda c: c != '<', result_str))
         rows: IterOfTuple = [
             (x[0].text, x[1].text) for x in ET.fromstring(result_str)]
-        if variable_names is None:
-            d = {}
-            for item in rows:
-                if item[0] is None or item[1] is None:
-                    pass
-                else:
-                    d[item[0]] = item[1]
-            return d
-        if isinstance(variable_names, str):
-            result: ListOfTuple = list(filter(
-                lambda x: x[0] == variable_names, rows))
-            if result:
-                item = result[0]
-                if item[0] is None or item[1] is None:
-                    return {}
-                return {item[0]: item[1]}
-            return {}
-        variable_names_list: List[str] = variable_names
+
         result = list(filter(lambda x: x[0] in variable_names_list, rows))
         d = {}
         for item in result:

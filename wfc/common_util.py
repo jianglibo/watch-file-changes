@@ -90,6 +90,7 @@ def get_filecontent_lines(config_file, encoding="utf-8"):
     finally:
         f.close()
 
+
 def get_configuration_yml(config_file: Union[str, Path], encoding="utf-8") -> Configuration:
     config_path: Path
     if isinstance(config_file, str):
@@ -116,7 +117,6 @@ def get_configration(config_file: str, encoding="utf-8") -> dict:
 
 def get_filehashes(files, mode="SHA256") -> List[FileHash]:
     return [get_one_filehash(h, mode) for h in files]
-
 
 
 def get_one_filehash(file_to_hash: Union[Path, str], mode="SHA256") -> FileHash:
@@ -161,6 +161,7 @@ def send_lines_to_client(content: Union[Dict, str, bytes]):
         # print(json.dumps(content, cls=CustomJSONEncoder))
         print(value)
     print(LINE_END)
+
 
 def get_diskfree() -> Iterable[DiskFree]:
     """
@@ -385,17 +386,15 @@ def update_block_config_file(path_or_lines, key, value=None, block_name="mysqld"
     return block_before
 
 
-def subprocess_checkout_print_error(cmd_list, env: Dict[str, str] = None, shell=False) -> bytes:
-    try:
-        value = subprocess.run(cmd_list, env=env, check=True, stdout=subprocess.PIPE, shell=shell).stdout
-        # value = subprocess.check_output(cmd_list, env=env, stderr=subprocess.STDOUT, shell=shell)
-        return value
-    except subprocess.CalledProcessError as cpe:
-        print(cpe)
-        # print(cpe.stderr)
-        # print(cpe.stdout)
-        # print('................')
-        return cpe.output
+def subprocess_checkout_print_error(cmd_list: List[str], env: Dict[str, str] = None, shell=False) -> str:
+    assert Path(cmd_list[0]).exists()
+    return subprocess.run(cmd_list,
+                            env=env,
+                            check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            shell=shell,
+                            universal_newlines=True).stdout
 
 
 def clone_namedtuple(nt: NamedTuple, **kwargs) -> NamedTuple:

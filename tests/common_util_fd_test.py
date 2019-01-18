@@ -1,5 +1,5 @@
 import unittest
-import common_util
+from wfc import common_util
 import tempfile
 import shutil
 from pathlib import Path
