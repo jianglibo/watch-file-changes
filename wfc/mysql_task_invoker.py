@@ -1,10 +1,8 @@
 import os
-import sys
 from itertools import dropwhile, islice
 from typing import List, Optional, Tuple, Union, Iterable, Dict
 
 import io
-import logging
 import re
 import subprocess
 import tempfile
@@ -12,6 +10,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from wfc import common_util
 from wfc.global_static import Configuration, PyGlobal
+from wfc.values import FileHash
 
 
 IterOfTuple = Iterable[Tuple[Optional[str], Optional[str]]]
@@ -149,15 +148,16 @@ class MysqlTaskInvoker():
                 d[item[0]] = item[1]
         return d
 
-    def flushlogs_filehash(self):
-        idx_file = self.get_mysql_variables('log_bin_index')['value']
-        parent = os.path.split(idx_file)[0]
-        with io.open(idx_file, 'rb') as opened_file:
-            lines = opened_file.readlines()
+    def flushlogs_filehash(self) -> Iterable[FileHash]:
+        log_bin_index = 'log_bin_index'
+        idx_file = self.get_mysql_variables(log_bin_index)[log_bin_index]
+        parent: Path = Path(idx_file).parent
+        with io.open(idx_file, 'r') as opened_file:
+            lines: List[str] = opened_file.readlines()
             lines = [line.strip() for line in lines]
 
             def to_file_desc(relative_file):
-                ff = os.path.join(parent, relative_file)
+                ff = parent.joinpath(relative_file)
                 return common_util.get_one_filehash(ff)
             return map(to_file_desc, lines)
 
@@ -173,7 +173,7 @@ class MysqlTaskInvoker():
             print("invoke_mysql_flushlogs subprocess call return %s" % return_code)
         return self.flushlogs_filehash()
 
-    def invoke_mysql_dump(self):
+    def invoke_mysql_dump(self) -> FileHash:
         dumpfile = self.c.dict_like['DumpFilename']
         dump_cmd = [self.c.dict_like['DumpBin'],
                     "-u%s" % self.user,
@@ -190,7 +190,8 @@ class MysqlTaskInvoker():
 
         return common_util.get_one_filehash(dumpfile)
 
-    def enable_logbin(self, mycnf_file, logbin_base_name='hm-log-bin', server_id='1'):
+    @staticmethod
+    def enable_logbin(mycnf_file: str, logbin_base_name='hm-log-bin', server_id='1'):
         common_util.backup_localdirectory(mycnf_file)
         with io.open(mycnf_file, 'r') as opened_file:
             lines = [line.strip() for line in opened_file.readlines()]
@@ -199,18 +200,18 @@ class MysqlTaskInvoker():
             lines = common_util.update_block_config_file(
                 lines, 'server-id', server_id)
 
-        with io.open(mycnf_file, 'wb') as opened_file:
+        with io.open(mycnf_file, 'w') as opened_file:
             opened_file.writelines(["%s%s" % (line, "\n") for line in lines])
 
-    def get_mycnf_file(self):
+    def get_mycnf_file(self) -> str:
         out = subprocess.check_output([self.client_bin, '--help'])
         assert isinstance(out, bytes)
-        lines = re.split(r'[\r\n]+', out.decode())
-        assert isinstance(lines, list)
-        lines = dropwhile(
+        lines_list = re.split(r'[\r\n]+', out.decode())
+        assert isinstance(lines_list, list)
+        lines_iter = dropwhile(
             lambda line: "Default options are read from the following" not in line,
-            lines)
-        result = next(islice(lines, 1, None))
+            lines_list)
+        result = next(islice(lines_iter, 1, None))
         results = result.split()
         for r in results:
             if os.path.exists(r):

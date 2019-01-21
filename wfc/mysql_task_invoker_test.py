@@ -3,9 +3,6 @@ from pathlib import Path
 from wfc import common_util
 from wfc.global_static import Configuration
 from wfc.mysql_task_invoker import MysqlTaskInvoker
-import subprocess
-import os
-import sys
 
 
 def get_default_config() -> Configuration:
@@ -42,3 +39,23 @@ class TestMysqlInvoker:
 
         assert isinstance(mti.get_mysql_variables('datadir'), dict)
         assert mti.get_mysql_variables('datadir')['datadir']
+
+    def test_enable_log_bin(self):
+        c: Configuration = get_default_config()
+        mti: MysqlTaskInvoker = MysqlTaskInvoker(c)
+        mycnf_file = mti.get_mycnf_file()
+        # assert "abc" in mycnf_file
+        MysqlTaskInvoker.enable_logbin(mycnf_file)
+
+
+    def test_dump(self):
+        c: Configuration = get_default_config()
+        mti: MysqlTaskInvoker = MysqlTaskInvoker(c)
+        fh = mti.invoke_mysql_dump()
+        assert fh.Algorithm == "SHA256"
+
+    def test_flush(self):
+        c: Configuration = get_default_config()
+        mti: MysqlTaskInvoker = MysqlTaskInvoker(c)
+        fh = mti.invoke_mysql_flushlogs()
+        assert next(fh).Algorithm == "SHA256"

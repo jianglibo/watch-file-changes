@@ -150,7 +150,7 @@ def get_dir_filehashes(dir_to_hash: Union[Path, str], mode="SHA256") -> List[Fil
     return l
 
 
-def send_lines_to_client(content: Union[Dict, str, bytes]):
+def send_lines_to_client(content: Union[Dict, str, bytes, FileHash, Iterable[FileHash]]):
     print(LINE_START)
     if isinstance(content, str):
         print(content)
@@ -256,7 +256,13 @@ def get_maxbackup(path: Path) -> Path:
     return path
 
 
-def backup_localdirectory(path: Path, keep_origin=True) -> Path:
+def backup_localdirectory(to_backup: Union[Path, str], keep_origin=True) -> Path:
+    path: Path
+    if isinstance(to_backup, str):
+        path = Path(to_backup)
+    else:
+        path = to_backup
+
     if not path.exists():
         raise ValueError("%s doesn't exists." % path)
     m = re.match(r'^(.*?)\.\d+$', str(path))

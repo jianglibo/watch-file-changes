@@ -39,7 +39,7 @@ class TestSubprocesses:
                             shell=True,
                             universal_newlines=True)
         assert isinstance(cp.stdout, str)
-    
+
     def test_var_expand(self):
         new_env = {
             **os.environ,
@@ -63,4 +63,4 @@ class TestSubprocesses:
                             shell=True,
                             universal_newlines=True)
 
-        assert 'E:' == cp.stdout.strip()
+        assert cp.stdout.strip() == 'E:'
